@@ -2,20 +2,11 @@
   "name": "longchamp-liff",
   "version": "1.0.0",
   "description": "A LINE Front-end Framework (LIFF) application",
-  "main": "app.js",
+  "main": "index.html",
   "scripts": {
-    "start": "http-server",
-    "dev": "http-server -p 8000 --cors",
-    "build": "echo 'Build script - add your build process here'"
+    "start": "python3 -m http.server 8000"
   },
-  "keywords": [
-    "liff",
-    "line",
-    "bot"
-  ],
+  "keywords": ["liff", "line"],
   "author": "",
-  "license": "MIT",
-  "devDependencies": {
-    "http-server": "^14.1.1"
-  }
+  "license": "MIT"
 }
