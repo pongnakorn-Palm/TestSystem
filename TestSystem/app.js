@@ -1,3 +1,11 @@
+// Detect user language
+let userLang = 'en'; // Default language
+if (navigator.language || navigator.userLanguage) {
+    const browserLang = (navigator.language || navigator.userLanguage).toLowerCase();
+    userLang = browserLang.startsWith('th') ? 'th' : 'en';
+}
+document.documentElement.lang = userLang;
+
 // Page Navigation
 function showPage(pageId) {
     document.querySelectorAll('.page').forEach(page => {
@@ -23,9 +31,7 @@ consentCheckbox.addEventListener('change', function() {
 // Terms Modal
 const termsModal = document.getElementById('termsModal');
 const openTermsLink = document.getElementById('openTerms');
-const acceptTermsCheckbox = document.getElementById('acceptTerms');
-const btnAcceptTerms = document.getElementById('btnAcceptTerms');
-const btnCloseTerms = document.getElementById('btnCloseTerms');
+const btnCloseModal = document.getElementById('btnCloseModal');
 
 // Open Terms Modal
 openTermsLink.addEventListener('click', function(e) {
@@ -33,20 +39,8 @@ openTermsLink.addEventListener('click', function(e) {
     termsModal.classList.add('active');
 });
 
-// Accept Terms Checkbox - Enable/Disable Accept button
-acceptTermsCheckbox.addEventListener('change', function() {
-    btnAcceptTerms.disabled = !this.checked;
-});
-
-// Accept Terms Button - Check consent and close modal
-btnAcceptTerms.addEventListener('click', function() {
-    consentCheckbox.checked = true;
-    submitBtn.disabled = false;
-    termsModal.classList.remove('active');
-});
-
-// Close Terms Modal
-btnCloseTerms.addEventListener('click', function() {
+// Close Terms Modal with X button
+btnCloseModal.addEventListener('click', function() {
     termsModal.classList.remove('active');
 });
 
@@ -73,25 +67,25 @@ document.getElementById('registerForm').addEventListener('submit', function(e) {
 
     // Validation
     if (!fullname || !phone || !email) {
-        errorDiv.textContent = 'กรุณากรอกข้อมูลให้ครบถ้วน';
+        errorDiv.textContent = userLang === 'th' ? 'กรุณากรอกข้อมูลให้ครบถ้วน' : 'Please fill in all required fields';
         return;
     }
 
-    // Phone validation (Thai format)
-    if (!/^0[0-9]{8,9}$/.test(phone)) {
-        errorDiv.textContent = 'กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง';
+    // Phone validation (10 digits)
+    if (!/^0[0-9]{9}$/.test(phone)) {
+        errorDiv.textContent = userLang === 'th' ? 'กรุณากรอกเบอร์โทรศัพท์ 10 หลักให้ถูกต้อง' : 'Please enter a valid 10-digit phone number';
         return;
     }
 
     // Email validation
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        errorDiv.textContent = 'กรุณากรอก Email ให้ถูกต้อง';
+        errorDiv.textContent = userLang === 'th' ? 'กรุณากรอก Email ให้ถูกต้อง' : 'Please enter a valid email address';
         return;
     }
 
     // Consent validation
     if (!consent) {
-        errorDiv.textContent = 'กรุณายอมรับข้อกำหนดและเงื่อนไข';
+        errorDiv.textContent = userLang === 'th' ? 'กรุณายอมรับข้อกำหนดและเงื่อนไข' : 'Please accept the terms and conditions';
         return;
     }
 

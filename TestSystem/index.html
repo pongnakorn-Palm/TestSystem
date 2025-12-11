@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -63,7 +63,7 @@
                     </div>
                     <div class="form-group">
                         <label for="phone">Phone Number</label>
-                        <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required>
+                        <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" maxlength="10" required>
                     </div>
                     <div class="form-group">
                         <label for="email">Email</label>
@@ -121,6 +121,7 @@
     <!-- Terms Modal -->
     <div id="termsModal" class="modal">
         <div class="modal-content">
+            <button class="modal-close" id="btnCloseModal">&times;</button>
             <div class="modal-inner">
                 <div class="modal-inner-frame">
             <div class="modal-header">
@@ -148,14 +149,6 @@
                 </ol>
             </div>
 
-            <div class="modal-footer">
-                <div class="checkbox-group modal-checkbox">
-                    <input type="checkbox" id="acceptTerms" name="acceptTerms">
-                    <label for="acceptTerms">ยอมรับเงื่อนไข</label>
-                </div>
-                <button class="btn-accept" id="btnAcceptTerms" disabled>ยอมรับเงื่อนไขทุกประการ (Accept)</button>
-                <button class="btn-close-modal" id="btnCloseTerms">ปิดหน้าจอนี้</button>
-            </div>
                 </div>
             </div>
         </div>

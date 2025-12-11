@@ -611,6 +611,32 @@ body {
     border: 1px solid var(--gold);
 }
 
+.modal-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 35px;
+    height: 35px;
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.modal-close:hover {
+    background: var(--gold);
+    color: var(--black);
+    transform: rotate(90deg);
+}
+
 .modal-inner {
     position: relative;
     border: 1px solid rgba(201, 169, 98, 0.3);
