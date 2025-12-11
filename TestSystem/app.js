@@ -6,9 +6,55 @@ function showPage(pageId) {
     document.getElementById(pageId).classList.add('active');
 }
 
-// Landing Page - Click to go to Register
-document.getElementById('landing').addEventListener('click', function() {
+// Landing Page - Click Register button to go to Register page
+document.getElementById('btnRegister').addEventListener('click', function(e) {
+    e.stopPropagation();
     showPage('register');
+});
+
+// Checkbox validation - Enable/disable submit button
+const consentCheckbox = document.getElementById('consent');
+const submitBtn = document.getElementById('submitBtn');
+
+consentCheckbox.addEventListener('change', function() {
+    submitBtn.disabled = !this.checked;
+});
+
+// Terms Modal
+const termsModal = document.getElementById('termsModal');
+const openTermsLink = document.getElementById('openTerms');
+const acceptTermsCheckbox = document.getElementById('acceptTerms');
+const btnAcceptTerms = document.getElementById('btnAcceptTerms');
+const btnCloseTerms = document.getElementById('btnCloseTerms');
+
+// Open Terms Modal
+openTermsLink.addEventListener('click', function(e) {
+    e.preventDefault();
+    termsModal.classList.add('active');
+});
+
+// Accept Terms Checkbox - Enable/Disable Accept button
+acceptTermsCheckbox.addEventListener('change', function() {
+    btnAcceptTerms.disabled = !this.checked;
+});
+
+// Accept Terms Button - Check consent and close modal
+btnAcceptTerms.addEventListener('click', function() {
+    consentCheckbox.checked = true;
+    submitBtn.disabled = false;
+    termsModal.classList.remove('active');
+});
+
+// Close Terms Modal
+btnCloseTerms.addEventListener('click', function() {
+    termsModal.classList.remove('active');
+});
+
+// Close modal when clicking outside
+termsModal.addEventListener('click', function(e) {
+    if (e.target === termsModal) {
+        termsModal.classList.remove('active');
+    }
 });
 
 // Form Submission
@@ -18,8 +64,12 @@ document.getElementById('registerForm').addEventListener('submit', function(e) {
     const fullname = document.getElementById('fullname').value.trim();
     const phone = document.getElementById('phone').value.trim();
     const email = document.getElementById('email').value.trim();
-    const btn = document.querySelector('.btn-register');
+    const consent = document.getElementById('consent').checked;
+    const btn = document.getElementById('submitBtn');
     const errorDiv = document.getElementById('error');
+
+    // Clear previous error
+    errorDiv.textContent = '';
 
     // Validation
     if (!fullname || !phone || !email) {
@@ -36,6 +86,12 @@ document.getElementById('registerForm').addEventListener('submit', function(e) {
     // Email validation
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         errorDiv.textContent = 'กรุณากรอก Email ให้ถูกต้อง';
+        return;
+    }
+
+    // Consent validation
+    if (!consent) {
+        errorDiv.textContent = 'กรุณายอมรับข้อกำหนดและเงื่อนไข';
         return;
     }
 
@@ -57,8 +113,3 @@ document.getElementById('registerForm').addEventListener('submit', function(e) {
         showPage('success');
     }, 1500);
 });
-
-// Show error message
-function showError(msg) {
-    document.getElementById('error').textContent = msg;
-}

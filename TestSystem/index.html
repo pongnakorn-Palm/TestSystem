@@ -10,18 +10,27 @@
     <!-- Landing Page -->
     <div id="landing" class="page active">
         <div class="landing-container">
-            <div class="landing-logo">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/Longchamp_logo.svg/2560px-Longchamp_logo.svg.png" alt="Longchamp" />
+            <div class="landing-frame"></div>
+
+            <div class="landing-content">
+                <div class="landing-logo-section">
+                    <h1 class="landing-logo-text">Longchamp</h1>
+                    <p class="landing-logo-subtitle">Paris</p>
+                </div>
+
+                <div class="landing-welcome">
+                    <p>We are pleased to welcome you<br>
+                    to the Longchamp Green Pop-up at Songwat,<br>
+                    an immersive experience reflecting<br>
+                    the spirit of French heritage and modern allure.</p>
+                </div>
+
+                <button class="btn-landing" id="btnRegister">Register</button>
             </div>
-            <div class="landing-divider"></div>
-            <h1 class="landing-title">ลงทะเบียน</h1>
-            <h2 class="landing-subtitle">เพื่อรับส่วนลดพิเศษ</h2>
-            <div class="tap-hint">
-                <span>Tap to continue</span>
-                <div class="tap-arrow">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 5V19M12 19L6 13M12 19L18 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+
+            <div class="landing-footer">
+                <div class="landing-horse-icon">
+                    <img src="assets/LongchompLogo.png" alt="Longchamp" />
                 </div>
             </div>
         </div>
@@ -30,31 +39,50 @@
     <!-- Register Page -->
     <div id="register" class="page">
         <div class="container">
+            <div class="register-frame"></div>
+
             <div class="header">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/Longchamp_logo.svg/2560px-Longchamp_logo.svg.png" alt="Longchamp" class="logo" />
-                <p class="header-tagline">Thailand</p>
+                <h1 class="header-logo-text">Longchamp</h1>
+                <p class="header-tagline">Paris</p>
+
+                <div class="event-banner">
+                    <h2 class="event-title">LONGCHAMP GREEN POP-UP</h2>
+                    <p class="event-date">13 - 28 December, 2025</p>
+                    <p class="event-location">Play Art House, Songwat, Bangkok</p>
+                </div>
             </div>
+
             <div class="content">
                 <h2>Register</h2>
-                <p class="desc">กรอกข้อมูลเพื่อรับสิทธิพิเศษจาก Longchamp</p>
+                <p class="desc">Please fill in your information to receive exclusive privileges from Longchamp Thailand</p>
 
                 <form id="registerForm" class="register-form">
                     <div class="form-group">
-                        <label for="fullname">ชื่อ-สกุล</label>
-                        <input type="text" id="fullname" name="fullname" placeholder="Full Name" required>
+                        <label for="fullname">Full Name</label>
+                        <input type="text" id="fullname" name="fullname" placeholder="Enter your full name" required>
                     </div>
                     <div class="form-group">
-                        <label for="phone">เบอร์โทรศัพท์</label>
-                        <input type="tel" id="phone" name="phone" placeholder="Phone Number" required>
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required>
                     </div>
                     <div class="form-group">
-                        <label for="email">อีเมล</label>
-                        <input type="email" id="email" name="email" placeholder="Email Address" required>
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" placeholder="Enter your email address" required>
                     </div>
-                    <button type="submit" class="btn-register">Submit</button>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="consent" name="consent">
+                        <label for="consent">ข้าพเจ้ายอมรับ <a href="#" id="openTerms">ข้อกำหนดและเงื่อนไข</a></label>
+                    </div>
+
+                    <button type="submit" class="btn-register" id="submitBtn" disabled>Register</button>
                 </form>
 
                 <div id="error" class="error-message"></div>
+
+                <div class="horse-icon">
+                    <img src="assets/LongchompLogo.png" alt="Longchamp" />
+                </div>
             </div>
         </div>
     </div>
@@ -62,22 +90,72 @@
     <!-- Success Page -->
     <div id="success" class="page">
         <div class="container">
+            <div class="register-frame"></div>
+
             <div class="header">
                 <div class="success-icon">
                     <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="30" cy="30" r="29" stroke="#1a1a1a" stroke-width="1"/>
-                        <path d="M18 30L26 38L42 22" stroke="#1a1a1a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="30" cy="30" r="29" stroke="#a4d65e" stroke-width="1"/>
+                        <path d="M18 30L26 38L42 22" stroke="#a4d65e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </div>
                 <h1 class="animated-title">Thank You</h1>
             </div>
+
             <div class="content">
                 <h2>Registration Complete</h2>
-                <p class="desc">คุณจะได้รับข่าวสารและสิทธิพิเศษจาก Longchamp Thailand</p>
+                <p class="desc">You will receive news and exclusive privileges from Longchamp Thailand</p>
                 <div class="success-details">
                     <p><strong>Name</strong> <span id="successName"></span></p>
                     <p><strong>Phone</strong> <span id="successPhone"></span></p>
                     <p><strong>Email</strong> <span id="successEmail"></span></p>
+                </div>
+
+                <div class="horse-icon">
+                    <img src="assets/LongchompLogo.png" alt="Longchamp" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terms Modal -->
+    <div id="termsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-inner">
+                <div class="modal-inner-frame">
+            <div class="modal-header">
+                <h2>ข้อกำหนดและเงื่อนไข</h2>
+                <p class="modal-subtitle">Terms & Conditions</p>
+            </div>
+
+            <div class="modal-body">
+                <div class="terms-event">
+                    <p class="event-name">LONGCHAMP GREEN POP-UP</p>
+                    <p class="event-location">AT PLAY ART HOUSE, SONGWAT</p>
+                    <p class="event-date">13 – 28 DECEMBER 2025</p>
+                </div>
+
+                <ol class="terms-list">
+                    <li>สามารถลงทะเบียนได้ 1 บัญชีต่อ 1 ครั้ง และสามารถเข้าร่วมได้เฉพาะภายในงาน LONGCHAMP GREEN POP-UP ณ PLAY ART HOUSE ถนนทรงวาด เท่านั้น</li>
+
+                    <li>สิทธิพิเศษไม่สามารถแลก เปลี่ยน หรือทอนเป็นเงินสด หรือสิ่งอื่นทดแทนได้ และไม่สามารถใช้ร่วมกับรายการส่งเสริมการขายอื่นได้</li>
+
+                    <li>บริษัทขอสงวนสิทธิ์ในการเปลี่ยนแปลงเงื่อนไขโดยไม่ต้องแจ้งให้ทราบล่วงหน้า</li>
+
+                    <li>รูปภาพที่ปรากฏในแอปพลิเคชันจัดทำขึ้นเพื่อวัตถุประสงค์ด้านการประชาสัมพันธ์เท่านั้น</li>
+
+                    <li>การเข้าร่วมกิจกรรมนี้ ท่านรับทราบและยินยอมให้บริษัททำการเก็บรวบรวม ใช้ และประมวลผลข้อมูลส่วนบุคคลของท่าน รวมถึงข้อมูลส่วนบุคคลของบุคคลอื่นใดที่ท่านอาจส่งมอบให้ ทั้งนี้เพื่อวัตถุประสงค์ในการดำเนินงาน จัดการ และตรวจสอบความถูกต้องของกิจกรรมตามที่บริษัทกำหนด</li>
+                </ol>
+            </div>
+
+            <div class="modal-footer">
+                <div class="checkbox-group modal-checkbox">
+                    <input type="checkbox" id="acceptTerms" name="acceptTerms">
+                    <label for="acceptTerms">ยอมรับเงื่อนไข</label>
+                </div>
+                <button class="btn-accept" id="btnAcceptTerms" disabled>ยอมรับเงื่อนไขทุกประการ (Accept)</button>
+                <button class="btn-close-modal" id="btnCloseTerms">ปิดหน้าจอนี้</button>
+            </div>
                 </div>
             </div>
         </div>
