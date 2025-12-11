@@ -1,32 +1,88 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TestSystem LIFF App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Longchamp Thailand</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/6/6e/Longchamp_logo.png" alt="Logo" class="logo" />
-            <h1 class="animated-title">TestSystem LIFF App</h1>
-        </div>
-        <div class="content">
-            <h2>Welcome to TestSystem</h2>
-            <p class="desc">This page will show your LINE profile information using LIFF.</p>
-            <div id="profile" class="profile-card" style="display:none;">
-                <img id="profilePicture" class="profile-img" src="" alt="Profile Picture" />
-                <div class="profile-info">
-                    <p><strong>Name:</strong> <span id="displayName"></span></p>
-                    <p><strong>User ID:</strong> <span id="userId"></span></p>
-                    <p><strong>Status Message:</strong> <span id="statusMessage"></span></p>
+    <!-- Landing Page -->
+    <div id="landing" class="page active">
+        <div class="landing-container">
+            <div class="landing-logo">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/Longchamp_logo.svg/2560px-Longchamp_logo.svg.png" alt="Longchamp" />
+            </div>
+            <div class="landing-divider"></div>
+            <h1 class="landing-title">ลงทะเบียน</h1>
+            <h2 class="landing-subtitle">เพื่อรับส่วนลดพิเศษ</h2>
+            <div class="tap-hint">
+                <span>Tap to continue</span>
+                <div class="tap-arrow">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 5V19M12 19L6 13M12 19L18 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
                 </div>
             </div>
-            <div id="error" class="error-message"></div>
         </div>
     </div>
-    <script src="https://liff.line.me/sdk/web/liff.js"></script>
+
+    <!-- Register Page -->
+    <div id="register" class="page">
+        <div class="container">
+            <div class="header">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/Longchamp_logo.svg/2560px-Longchamp_logo.svg.png" alt="Longchamp" class="logo" />
+                <p class="header-tagline">Thailand</p>
+            </div>
+            <div class="content">
+                <h2>Register</h2>
+                <p class="desc">กรอกข้อมูลเพื่อรับสิทธิพิเศษจาก Longchamp</p>
+
+                <form id="registerForm" class="register-form">
+                    <div class="form-group">
+                        <label for="fullname">ชื่อ-สกุล</label>
+                        <input type="text" id="fullname" name="fullname" placeholder="Full Name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">เบอร์โทรศัพท์</label>
+                        <input type="tel" id="phone" name="phone" placeholder="Phone Number" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">อีเมล</label>
+                        <input type="email" id="email" name="email" placeholder="Email Address" required>
+                    </div>
+                    <button type="submit" class="btn-register">Submit</button>
+                </form>
+
+                <div id="error" class="error-message"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Page -->
+    <div id="success" class="page">
+        <div class="container">
+            <div class="header">
+                <div class="success-icon">
+                    <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="30" cy="30" r="29" stroke="#1a1a1a" stroke-width="1"/>
+                        <path d="M18 30L26 38L42 22" stroke="#1a1a1a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <h1 class="animated-title">Thank You</h1>
+            </div>
+            <div class="content">
+                <h2>Registration Complete</h2>
+                <p class="desc">คุณจะได้รับข่าวสารและสิทธิพิเศษจาก Longchamp Thailand</p>
+                <div class="success-details">
+                    <p><strong>Name</strong> <span id="successName"></span></p>
+                    <p><strong>Phone</strong> <span id="successPhone"></span></p>
+                    <p><strong>Email</strong> <span id="successEmail"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>
