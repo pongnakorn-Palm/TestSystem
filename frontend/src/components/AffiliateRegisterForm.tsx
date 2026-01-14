@@ -259,13 +259,15 @@ export default function AffiliateRegisterForm() {
 
 
                 {/* Event Info Card */}
-                <div className="mb-6 -mx-4">
+                <div className="mb-6">
                     {/* Banner Image */}
-                    <img
-                        src="/aff-banner.png"
-                        alt="มาเป็นพันธิมิตรกับเรา"
-                        className="w-full h-auto object-cover aspect-[3/2]"
-                    />
+                    <div className="overflow-hidden rounded-2xl">
+                        <img
+                            src="/aff-banner.png"
+                            alt="มาเป็นพันธิมิตรกับเรา"
+                            className="w-full h-auto object-cover aspect-[3/2]"
+                        />
+                    </div>
 
                     {/* Text Content Below Banner */}
                     <div className="p-4 sm:p-6">
