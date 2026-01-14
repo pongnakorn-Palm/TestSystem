@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import liff from '@line/liff';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 export default function ThankYou() {
     const navigate = useNavigate();
     const location = useLocation();
-    const [copied, setCopied] = useState(false);
 
     // Protected Route: Redirect if accessed directly without registration data
     const hasRegistered = !!location.state?.name;
@@ -27,20 +26,6 @@ export default function ThankYou() {
         : 'แพ็กเกจคู่ (2 ที่นั่ง)';
 
     const customerDiscount = selectedProduct === 'single_package' ? '1,000' : '2,000';
-
-    // Generate referral link
-    const baseUrl = window.location.origin;
-    const referralLink = `${baseUrl}/?ref=${affiliateCode}`;
-
-    const handleCopyLink = async () => {
-        try {
-            await navigator.clipboard.writeText(referralLink);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        } catch (err) {
-            console.error('Failed to copy:', err);
-        }
-    };
 
     const handleClose = () => {
         if (liff.isInClient()) {
