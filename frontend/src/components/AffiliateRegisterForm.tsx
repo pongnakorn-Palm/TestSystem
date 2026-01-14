@@ -277,20 +277,20 @@ export default function AffiliateRegisterForm() {
                             </h2>
                             <div className="text-white/90 text-sm sm:text-base space-y-2.5 text-left inline-block">
                                 <div className="flex items-start gap-3">
-                                    <svg className="w-6 h-6 text-aiya-purple shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    <svg className="w-6 h-6 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="#3A23B5" strokeWidth={2.5}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                     <span>ได้ค่าคอมมิชชั่น</span>
                                 </div>
                                 <div className="flex items-start gap-3">
-                                    <svg className="w-6 h-6 text-aiya-purple shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                    <svg className="w-6 h-6 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="#3A23B5" strokeWidth={2.5}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                                     </svg>
                                     <span>ได้ส่วนลดให้ผู้สมัครคอร์ส</span>
                                 </div>
                                 <div className="flex items-start gap-3">
-                                    <svg className="w-6 h-6 text-aiya-purple shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                    <svg className="w-6 h-6 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="#3A23B5" strokeWidth={2.5}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                                     </svg>
                                     <span>ผู้สมัครได้ความรู้ AI ช่วยธุรกิจของคุณให้สำเร็จ</span>
                                 </div>
@@ -547,29 +547,27 @@ export default function AffiliateRegisterForm() {
                             className={`bg-white/5 border ${showError('pdpaConsent') ? 'border-red-400/50' : 'border-white/10'} rounded-xl p-4 transition-colors`}
                         >
                             <label className="flex items-start gap-3 cursor-pointer group">
-                                <div className="relative flex-shrink-0 mt-0.5">
-                                    <input
-                                        type="checkbox"
-                                        name="pdpaConsent"
-                                        checked={formData.pdpaConsent}
-                                        onChange={(e) => {
-                                            setFormData(prev => ({ ...prev, pdpaConsent: e.target.checked }));
-                                            if (errors.pdpaConsent) {
-                                                setErrors(prev => ({ ...prev, pdpaConsent: undefined }));
-                                            }
-                                        }}
-                                        onBlur={() => handleBlur('pdpaConsent')}
-                                        className="peer sr-only"
-                                    />
-                                    <div className="w-6 h-6 border-2 border-white/30 rounded-md flex items-center justify-center group-hover:border-aiya-purple/50 peer-checked:bg-gradient-to-r peer-checked:from-aiya-purple peer-checked:to-purple-600 peer-checked:border-aiya-purple transition-all">
-                                        <svg
-                                            className="w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity"
-                                            fill="currentColor"
-                                            viewBox="0 0 20 20"
-                                        >
-                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                        </svg>
-                                    </div>
+                                <input
+                                    type="checkbox"
+                                    name="pdpaConsent"
+                                    checked={formData.pdpaConsent}
+                                    onChange={(e) => {
+                                        setFormData(prev => ({ ...prev, pdpaConsent: e.target.checked }));
+                                        if (errors.pdpaConsent) {
+                                            setErrors(prev => ({ ...prev, pdpaConsent: undefined }));
+                                        }
+                                    }}
+                                    onBlur={() => handleBlur('pdpaConsent')}
+                                    className="peer sr-only"
+                                />
+                                <div className="relative flex-shrink-0 mt-0.5 w-6 h-6 border-2 border-white/30 rounded-md flex items-center justify-center group-hover:border-aiya-purple/50 peer-checked:bg-gradient-to-r peer-checked:from-aiya-purple peer-checked:to-purple-600 peer-checked:border-aiya-purple transition-all">
+                                    <svg
+                                        className="w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                    >
+                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                    </svg>
                                 </div>
                                 <span className="text-sm text-white/90 leading-relaxed">
                                     ข้าพเจ้ายอมรับ{' '}
