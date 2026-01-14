@@ -542,9 +542,7 @@ export default function AffiliateRegisterForm() {
 
                     {/* PDPA Consent Checkbox */}
                     <div>
-                        <div
-                            className={`bg-white/5 border ${showError('pdpaConsent') ? 'border-red-400/50' : 'border-white/10'} rounded-xl p-4 transition-colors`}
-                        >
+                        <div className={`rounded-xl p-4 transition-colors ${showError('pdpaConsent') ? 'bg-red-500/10 border border-red-400/50' : 'bg-white/5 border border-white/10'}`}>
                             <label className="flex items-start gap-3 cursor-pointer group">
                                 <input
                                     type="checkbox"
@@ -559,16 +557,21 @@ export default function AffiliateRegisterForm() {
                                     onBlur={() => handleBlur('pdpaConsent')}
                                     className="peer sr-only"
                                 />
-                                <div className="relative flex-shrink-0 mt-0.5 w-6 h-6 border-2 border-white/30 rounded-md flex items-center justify-center group-hover:border-aiya-purple/50 peer-checked:bg-gradient-to-r peer-checked:from-aiya-purple peer-checked:to-purple-600 peer-checked:border-aiya-purple transition-all">
-                                    <svg
-                                        className="w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity"
-                                        fill="currentColor"
-                                        viewBox="0 0 20 20"
-                                    >
-                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+
+                                <div className="relative flex-shrink-0 mt-0.5 w-6 h-6 border-2 border-white/30 rounded-md flex items-center justify-center
+                                    transition-all duration-200 ease-out
+                                    group-hover:border-[#8c52ff]/50
+                                    peer-checked:bg-gradient-to-r peer-checked:from-[#8c52ff] peer-checked:to-[#5ce1e6]
+                                    peer-checked:border-transparent
+                                    peer-checked:[&_svg]:opacity-100 peer-checked:[&_svg]:scale-100">
+
+                                    <svg className="w-4 h-4 text-white opacity-0 transform scale-50 transition-all duration-200 pointer-events-none"
+                                        fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
                                     </svg>
                                 </div>
-                                <span className="text-sm text-white/90 leading-relaxed">
+
+                                <span className="text-sm text-white/90 leading-relaxed select-none">
                                     ข้าพเจ้ายอมรับ{' '}
                                     <a
                                         href="https://web.aiya.ai/privacy-policy"
