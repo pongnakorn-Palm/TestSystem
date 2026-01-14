@@ -44,6 +44,9 @@ export const LiffProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     const userProfile = await liff.getProfile();
                     const decodedIDToken = liff.getDecodedIDToken();
 
+                    console.log('LIFF Profile:', userProfile);
+                    console.log('LIFF ID Token:', decodedIDToken);
+
                     setProfile({
                         displayName: userProfile.displayName,
                         pictureUrl: userProfile.pictureUrl,
@@ -52,7 +55,8 @@ export const LiffProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     });
                 } else if (inClient) {
                     // Auto login if in LINE client but not logged in
-                    liff.login();
+                    // Request email scope during login
+                    liff.login({ redirectUri: window.location.href });
                 }
             } catch (err: any) {
                 console.error('LIFF Init Failed', err);
@@ -66,7 +70,8 @@ export const LiffProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const login = () => {
         if (!isLoggedIn) {
-            liff.login();
+            // Request email scope during login
+            liff.login({ redirectUri: window.location.href });
         }
     };
 
