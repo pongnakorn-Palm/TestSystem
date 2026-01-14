@@ -115,6 +115,8 @@ export default function AffiliateRegisterForm() {
                     error = 'กรุณากรอกเบอร์โทรศัพท์';
                 } else if (value.length < 9) {
                     error = 'เบอร์โทรศัพท์ต้องมีอย่างน้อย 9 หลัก';
+                } else if (value.length > 10) {
+                    error = 'เบอร์โทรศัพท์ต้องไม่เกิน 10 หลัก';
                 }
                 break;
             case 'affiliateCode':
@@ -303,7 +305,7 @@ export default function AffiliateRegisterForm() {
 
                 {/* LINE Profile Display - Only show in LINE client (LIFF) */}
                 {isReady && isInClient && isLoggedIn && profile && (
-                    <div className="mb-4 bg-green-50 rounded-lg p-2.5 border border-green-200">
+                    <div className="mb-4 bg-white rounded-lg p-2.5 shadow-md">
                         <div className="flex items-center gap-2">
                             {profile.pictureUrl && (
                                 <img
@@ -411,6 +413,7 @@ export default function AffiliateRegisterForm() {
                                 onBlur={() => handleBlur('phone')}
                                 onKeyDown={(e) => handleKeyDown(e, affiliateCodeRef)}
                                 enterKeyHint="next"
+                                maxLength={10}
                                 className={`input-modern ${showError('phone') ? 'border-red-500 ring-2 ring-red-200' : ''}`}
                                 placeholder="0812345678"
                                 inputMode="numeric"
@@ -470,10 +473,10 @@ export default function AffiliateRegisterForm() {
                                     key={key}
                                     type="button"
                                     onClick={() => handlePackageSelect(key)}
-                                    className={`relative p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                                    className={`relative p-4 rounded-xl transition-all duration-200 text-left ${
                                         formData.selectedProduct === key
-                                            ? 'border-aiya-purple bg-aiya-purple/5 shadow-lg scale-105'
-                                            : 'border-gray-200 hover:border-aiya-purple/50 hover:bg-gray-50'
+                                            ? 'bg-aiya-purple/5 shadow-xl scale-105 ring-2 ring-aiya-purple'
+                                            : 'bg-white shadow-md hover:shadow-lg'
                                     }`}
                                 >
                                     {/* Radio indicator */}
