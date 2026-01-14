@@ -264,7 +264,7 @@ export default function AffiliateRegisterForm() {
                     <img
                         src="/aff-banner.png"
                         alt="มาเป็นพันธิมิตรกับเรา"
-                        className="w-full h-auto object-cover max-h-[200px] sm:max-h-[280px] md:max-h-[320px]"
+                        className="w-full h-auto object-cover aspect-[3/2]"
                     />
 
                     {/* Text Content Below Banner */}
