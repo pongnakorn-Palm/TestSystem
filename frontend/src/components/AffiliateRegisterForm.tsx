@@ -217,16 +217,17 @@ export default function AffiliateRegisterForm() {
             return;
         }
 
-        // Verify code availability one final time before submission
-        if (formData.affiliateCode) {
+        // ถ้า real-time validation แสดงว่า code taken อยู่แล้ว ไม่ต้อง submit
+        if (codeAvailability === 'taken') {
+            scrollToError();
+            return;
+        }
+
+        // Verify code availability one final time before submission (เฉพาะกรณียังไม่เคยเช็ค)
+        if (formData.affiliateCode && codeAvailability !== 'available') {
             const isTaken = await checkCodeAvailability(formData.affiliateCode);
 
             if (isTaken) {
-                setErrors(prev => ({
-                    ...prev,
-                    affiliateCode: 'รหัสนี้ถูกใช้งานแล้ว กรุณาเลือกรหัสอื่น'
-                }));
-                setTouched(prev => new Set(prev).add('affiliateCode'));
                 scrollToError();
                 return;
             }
