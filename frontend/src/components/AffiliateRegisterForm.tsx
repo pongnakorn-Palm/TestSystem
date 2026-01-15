@@ -328,23 +328,33 @@ export default function AffiliateRegisterForm() {
 
                 {/* LINE Profile Display - Only show in LINE client (LIFF) */}
                 {isReady && isInClient && isLoggedIn && profile && (
-                    <div className="mb-4 md:mb-6 bg-white/10 rounded-lg p-2.5 md:p-3 backdrop-blur-sm shadow-md">
-                        <div className="flex items-center gap-2 md:gap-3">
-                            {profile.pictureUrl && (
+                    <div className="mb-6 bg-gradient-to-r from-white/5 to-white/10 border border-white/10 rounded-2xl p-4 flex items-center gap-4 shadow-lg backdrop-blur-md relative overflow-hidden">
+                        {/* Decorative Glow */}
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-aiya-purple/10 blur-[40px] rounded-full pointer-events-none"></div>
+
+                        {/* Avatar */}
+                        <div className="relative shrink-0">
+                            {profile.pictureUrl ? (
                                 <img
                                     src={profile.pictureUrl}
                                     alt={profile.displayName}
-                                    className="w-8 h-8 md:w-10 md:h-10 rounded-full"
+                                    className="w-14 h-14 rounded-full border-2 border-white/20 shadow-md object-cover"
                                 />
+                            ) : (
+                                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-aiya-purple to-aiya-navy flex items-center justify-center text-white text-xl font-bold border-2 border-white/20">
+                                    {profile.displayName?.charAt(0)}
+                                </div>
                             )}
-                            <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                                <svg className="w-4 h-4 md:w-5 md:h-5 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                </svg>
-                                <span className="text-xs md:text-sm text-white truncate">
-                                    {profile.displayName}
-                                </span>
-                            </div>
+                            {/* LINE Status Indicator (Green dot) */}
+                            <div className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 bg-[#06C755] border-2 border-[#020c17] rounded-full"></div>
+                        </div>
+
+                        {/* Text Info */}
+                        <div className="flex-1 min-w-0 z-10">
+                            <p className="text-xs text-gray-400 font-medium mb-0.5">เข้าสู่ระบบโดย</p>
+                            <h3 className="text-white text-lg font-bold truncate tracking-tight leading-tight">
+                                {profile.displayName}
+                            </h3>
                         </div>
                     </div>
                 )}
