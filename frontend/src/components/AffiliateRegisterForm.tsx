@@ -45,6 +45,8 @@ export default function AffiliateRegisterForm() {
     const [touched, setTouched] = useState<Set<string>>(new Set());
     const [isLoading, setIsLoading] = useState(false);
     const [submitError, setSubmitError] = useState('');
+    const [codeAvailability, setCodeAvailability] = useState<'checking' | 'available' | 'taken' | null>(null);
+    const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
 
     // Auto-fill form data from LINE profile (only if fields are empty)
     useEffect(() => {
@@ -132,6 +134,24 @@ export default function AffiliateRegisterForm() {
         return isValid;
     };
 
+    const checkCodeAvailability = async (code: string) => {
+        if (!code || code.length < 3) {
+            setCodeAvailability(null);
+            return;
+        }
+
+        try {
+            const apiUrl = import.meta.env.VITE_API_URL || '';
+            const response = await fetch(`${apiUrl}/api/check-affiliate?affiliateCode=${code}`);
+            const data = await response.json();
+
+            setCodeAvailability(data.exists ? 'taken' : 'available');
+        } catch (error) {
+            console.error('Error checking code availability:', error);
+            setCodeAvailability(null);
+        }
+    };
+
     const handleAffiliateCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         let value = e.target.value.toUpperCase();
         value = value.replace(/[^A-Z0-9]/g, '');
@@ -141,6 +161,32 @@ export default function AffiliateRegisterForm() {
             setErrors(prev => ({ ...prev, affiliateCode: undefined }));
         }
         setSubmitError('');
+
+        // Clear previous timer
+        if (debounceTimer) {
+            clearTimeout(debounceTimer);
+        }
+
+        // Set code availability to checking
+        if (value.length >= 3) {
+            setCodeAvailability('checking');
+
+            // Debounce the API call
+            const timer = setTimeout(() => {
+                checkCodeAvailability(value);
+            }, 500);
+
+            setDebounceTimer(timer);
+        } else {
+            setCodeAvailability(null);
+        }
+    };
+
+    const handleAffiliateCodeBlur = () => {
+        handleBlur('affiliateCode');
+        if (formData.affiliateCode.length >= 3) {
+            checkCodeAvailability(formData.affiliateCode);
+        }
     };
 
 
@@ -283,30 +329,71 @@ export default function AffiliateRegisterForm() {
                         />
                     </div>
 
-                    {/* Text Content Below Banner */}
+                    {/* Hero/Banner Content - Premium Mobile-First Design */}
                     <div className="p-4 sm:p-6 md:p-8">
-                        <div className="text-center">
-                            <h2 className="text-white text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-4 md:mb-6 leading-tight">
-                                มาเป็นพันธิมิตรกับเรา<br />เพื่อก้าวไปข้างหน้าด้วยกัน
-                            </h2>
-                            <div className="text-white/90 text-sm sm:text-base md:text-lg space-y-2.5 md:space-y-3 text-left inline-block">
-                                <div className="flex items-start gap-3 md:gap-4">
-                                    <svg className="w-6 h-6 md:w-7 md:h-7 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="#8c52ff" strokeWidth={2.5}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span>ได้ค่าคอมมิชชั่น</span>
+                        <div className="text-center space-y-5 md:space-y-6">
+
+                            {/* SECTION 1: The Hook - Gradient & Impact */}
+                            <div className="space-y-3 md:space-y-4">
+                                {/* Headline with Futuristic Cyan-to-Purple Gradient */}
+                                <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight">
+                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600">
+                                        🚀 โอกาสทอง! ร่วมเป็นส่วนหนึ่งของ AI EMPIRE
+                                    </span>
+                                </h2>
+
+                                {/* Sub-headline */}
+                                <p className="text-white text-base sm:text-lg md:text-xl font-medium">
+                                    สัมผัสประสบการณ์ความคุ้มแบบ WIN - WIN
+                                </p>
+
+                                {/* Quote */}
+                                <p className="text-gray-300 text-sm sm:text-base md:text-lg italic">
+                                    " คนบอกต่อได้ค่าคอม คนสมัครได้ส่วนลด "
+                                </p>
+                            </div>
+
+                            {/* SECTION 2: Benefits - Icons & Highlights with Glassmorphism */}
+                            <div className="mt-6 md:mt-8 bg-white/5 backdrop-blur-md rounded-2xl p-5 sm:p-6 md:p-8 space-y-5 md:space-y-6 shadow-xl border border-white/10">
+
+                                {/* Benefit A: Commission */}
+                                <div className="flex items-start gap-4 text-left">
+                                    {/* Icon: Hand with Money */}
+                                    <div className="shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-green-400/20 to-amber-400/20 flex items-center justify-center">
+                                        <svg className="w-7 h-7 sm:w-8 sm:h-8 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+
+                                    {/* Text */}
+                                    <div className="flex-1">
+                                        <p className="text-white/90 text-sm sm:text-base md:text-lg leading-relaxed">
+                                            สร้างรายได้เสริมง่ายๆ แค่บอกต่อ!{' '}
+                                            <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-300 via-emerald-400 to-green-500 text-lg sm:text-xl md:text-2xl block mt-1">
+                                                รับค่าคอมมิชชั่นสูงสุด 7,000 บาท
+                                            </span>
+                                        </p>
+                                    </div>
                                 </div>
-                                <div className="flex items-start gap-3 md:gap-4">
-                                    <svg className="w-6 h-6 md:w-7 md:h-7 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="#8c52ff" strokeWidth={2.5}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                                    </svg>
-                                    <span>ได้ส่วนลดให้ผู้สมัครคอร์ส</span>
-                                </div>
-                                <div className="flex items-start gap-3 md:gap-4">
-                                    <svg className="w-6 h-6 md:w-7 md:h-7 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="#8c52ff" strokeWidth={2.5}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                    </svg>
-                                    <span>ผู้สมัครได้ความรู้ AI ช่วยธุรกิจของคุณให้สำเร็จ</span>
+
+                                {/* Benefit B: Knowledge/Customer Discount */}
+                                <div className="flex items-start gap-4 text-left">
+                                    {/* Icon: Gift/Discount */}
+                                    <div className="shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-amber-400/20 to-orange-400/20 flex items-center justify-center">
+                                        <svg className="w-7 h-7 sm:w-8 sm:h-8 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                                        </svg>
+                                    </div>
+
+                                    {/* Text */}
+                                    <div className="flex-1">
+                                        <p className="text-white/90 text-sm sm:text-base md:text-lg leading-relaxed">
+                                            ผู้สมัครได้ความรู้ AI ช่วยธุรกิจของคุณให้สำเร็จ{' '}
+                                            <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-lg sm:text-xl md:text-2xl block mt-1">
+                                                ลูกค้ารับส่วนลดสูงสุด 2,000 บาท
+                                            </span>
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -466,24 +553,66 @@ export default function AffiliateRegisterForm() {
                             <label className="label-modern">
                                 Affiliate Code <span className="text-red-500">*</span>
                             </label>
-                            <input
-                                ref={affiliateCodeRef}
-                                type="text"
-                                name="affiliateCode"
-                                value={formData.affiliateCode}
-                                onChange={handleAffiliateCodeChange}
-                                onBlur={() => handleBlur('affiliateCode')}
-                                onKeyDown={(e) => handleKeyDown(e, noteRef)}
-                                enterKeyHint="next"
-                                className={`input-modern font-mono tracking-wider text-base ${showError('affiliateCode') ? 'ring-2 ring-red-400/50' : ''}`}
-                                placeholder="PARTNER2025"
-                            />
+                            <div className="relative">
+                                <input
+                                    ref={affiliateCodeRef}
+                                    type="text"
+                                    name="affiliateCode"
+                                    value={formData.affiliateCode}
+                                    onChange={handleAffiliateCodeChange}
+                                    onBlur={handleAffiliateCodeBlur}
+                                    onKeyDown={(e) => handleKeyDown(e, noteRef)}
+                                    enterKeyHint="next"
+                                    className={`input-modern font-mono tracking-wider text-base pr-10 ${showError('affiliateCode') ? 'ring-2 ring-red-400/50' :
+                                        codeAvailability === 'available' ? 'ring-2 ring-green-400/50' :
+                                            codeAvailability === 'taken' ? 'ring-2 ring-red-400/50' : ''
+                                        }`}
+                                    placeholder="AIYABOY"
+                                />
+                                {/* Availability Indicator */}
+                                {codeAvailability && (
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                        {codeAvailability === 'checking' && (
+                                            <svg className="animate-spin h-5 w-5 text-white/50" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                        )}
+                                        {codeAvailability === 'available' && (
+                                            <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                            </svg>
+                                        )}
+                                        {codeAvailability === 'taken' && (
+                                            <svg className="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                            </svg>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                             <p className="text-xs text-white/60 mt-1.5 ml-1 flex items-center gap-1">
                                 <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                                 </svg>
                                 ใช้ได้เฉพาะตัวอักษร A-Z และตัวเลข 0-9
                             </p>
+                            {codeAvailability === 'available' && !showError('affiliateCode') && (
+                                <p className="text-green-300 text-xs mt-1.5 ml-1 flex items-center gap-1 animate-fade-in">
+                                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                    รหัสนี้ว่าง สามารถใช้งานได้
+                                </p>
+                            )}
+                            {codeAvailability === 'taken' && (
+                                <p className="error-message text-red-300 text-xs mt-1.5 ml-1 flex items-center gap-1 animate-fade-in">
+                                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                    </svg>
+                                    รหัสนี้ถูกใช้งานแล้ว กรุณาเลือกรหัสอื่น
+                                </p>
+                            )}
                             {showError('affiliateCode') && (
                                 <p className="error-message text-red-300 text-xs mt-1.5 ml-1 flex items-center gap-1 animate-fade-in">
                                     <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
@@ -492,63 +621,6 @@ export default function AffiliateRegisterForm() {
                                     {errors.affiliateCode}
                                 </p>
                             )}
-                        </div>
-                    </div>
-
-                    {/* Package Information Card */}
-                    <div className="bg-gradient-to-r from-aiya-purple/10 to-aiya-navy/10 rounded-2xl p-5 md:p-6 lg:p-8 border border-aiya-purple/20">
-                        <div className="flex items-start gap-3 md:gap-4 mb-3 md:mb-4">
-                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-aiya-purple/20 flex items-center justify-center shrink-0">
-                                <span className="text-xl md:text-2xl">🎁</span>
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-white text-base md:text-lg lg:text-xl mb-1">รหัสพันธมิตรใช้ได้ทั้ง 2 แพ็กเกจ</h3>
-                                <p className="text-white/70 text-sm md:text-base">ลูกค้าของคุณสามารถใช้รหัสนี้เพื่อรับส่วนลดได้ทั้งแพ็กเกจเดี่ยวและแพ็กเกจคู่</p>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-                            {/* Single Package */}
-                            <div className="bg-white/5 rounded-xl p-3 md:p-4 lg:p-5 border border-white/10">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <svg className="w-6 h-6 text-aiya-purple" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
-                                    <h4 className="font-bold text-white text-sm md:text-base lg:text-lg">Single Package</h4>
-                                </div>
-                                <p className="text-white/60 text-xs md:text-sm mb-2">1 ที่นั่ง</p>
-                                <div className="space-y-1 md:space-y-2">
-                                    <div className="flex justify-between items-center text-xs md:text-sm lg:text-base">
-                                        <span className="text-white/70">Commission</span>
-                                        <span className="font-bold text-green-400">3,000 บาท</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-xs md:text-sm lg:text-base">
-                                        <span className="text-white/70">ส่วนลดลูกค้า</span>
-                                        <span className="font-semibold text-orange-400">-1,000 บาท</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Duo Package */}
-                            <div className="bg-white/5 rounded-xl p-3 md:p-4 lg:p-5 border border-white/10">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <svg className="w-6 h-6 text-aiya-purple" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                                    </svg>
-                                    <h4 className="font-bold text-white text-sm md:text-base lg:text-lg">Duo Package</h4>
-                                </div>
-                                <p className="text-white/60 text-xs md:text-sm mb-2">2 ที่นั่ง</p>
-                                <div className="space-y-1 md:space-y-2">
-                                    <div className="flex justify-between items-center text-xs md:text-sm lg:text-base">
-                                        <span className="text-white/70">Commission</span>
-                                        <span className="font-bold text-green-400">7,000 บาท</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-xs md:text-sm lg:text-base">
-                                        <span className="text-white/70">ส่วนลดลูกค้า</span>
-                                        <span className="font-semibold text-orange-400">-1,000 บาท</span>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
 
@@ -566,33 +638,69 @@ export default function AffiliateRegisterForm() {
                         />
                     </div>
 
-                    {/* PDPA Consent Checkbox */}
+                    {/* PDPA Consent Checkbox - AIYA Dark Theme */}
                     <div>
-                        <div className="flex items-center">
-                            <input
-                                id="pdpa-checkbox"
-                                type="checkbox"
-                                checked={formData.pdpaConsent}
-                                onChange={(e) => {
-                                    setFormData(prev => ({ ...prev, pdpaConsent: e.target.checked }));
-                                    if (errors.pdpaConsent) {
-                                        setErrors(prev => ({ ...prev, pdpaConsent: undefined }));
-                                    }
-                                    setSubmitError('');
-                                }}
-                                onBlur={() => handleBlur('pdpaConsent')}
-                                className={`w-4 h-4 border rounded-md bg-white/10 focus:ring-2 focus:ring-aiya-purple/50 text-aiya-purple cursor-pointer ${showError('pdpaConsent') ? 'border-red-400' : 'border-white/40'}`}
-                            />
-                            <label htmlFor="pdpa-checkbox" className="select-none ms-2 text-sm font-medium text-white/90 cursor-pointer">
+                        <label
+                            htmlFor="pdpa-checkbox"
+                            className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all duration-200 select-none ${showError('pdpaConsent')
+                                ? 'border-red-400/50 bg-red-500/5'
+                                : 'border-white/20 bg-white/5 hover:border-aiya-purple/50 hover:bg-white/10'
+                                }`}
+                        >
+                            <div className="relative shrink-0 mt-0.5">
+                                <input
+                                    id="pdpa-checkbox"
+                                    type="checkbox"
+                                    checked={formData.pdpaConsent}
+                                    onChange={(e) => {
+                                        setFormData(prev => ({ ...prev, pdpaConsent: e.target.checked }));
+                                        if (errors.pdpaConsent) {
+                                            setErrors(prev => ({ ...prev, pdpaConsent: undefined }));
+                                        }
+                                        setSubmitError('');
+                                    }}
+                                    onBlur={() => handleBlur('pdpaConsent')}
+                                    className="peer sr-only"
+                                />
+                                <div className={`w-5 h-5 rounded border transition-all duration-200 flex items-center justify-center ${formData.pdpaConsent
+                                    ? 'bg-gradient-to-br from-aiya-purple to-[#5C499D] border-aiya-purple'
+                                    : showError('pdpaConsent')
+                                        ? 'bg-white/5 border-red-400'
+                                        : 'bg-white/5 border-white/30 peer-hover:border-aiya-purple/50'
+                                    }`}>
+                                    {formData.pdpaConsent && (
+                                        <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    )}
+                                </div>
+                            </div>
+                            <span className="text-sm md:text-base font-medium text-white/90 leading-relaxed">
                                 ข้าพเจ้ายอมรับ{' '}
-                                <a href="#" className="text-blue-400 hover:underline">เงื่อนไขการใช้งาน</a>{' '}
+                                <a
+                                    href="https://web.aiya.ai/privacy-policy"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="text-blue-400 hover:text-blue-300 hover:underline transition-colors"
+                                >
+                                    เงื่อนไขการใช้งาน
+                                </a>{' '}
                                 และ{' '}
-                                <a href="#" className="text-blue-400 hover:underline">นโยบายความเป็นส่วนตัว</a>{' '}
+                                <a
+                                    href="https://web.aiya.ai/privacy-policy"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="text-blue-400 hover:text-blue-300 hover:underline transition-colors"
+                                >
+                                    นโยบายความเป็นส่วนตัว
+                                </a>{' '}
                                 ของ AIYA <span className="text-red-400">*</span>
-                            </label>
-                        </div>
+                            </span>
+                        </label>
                         {showError('pdpaConsent') && (
-                            <p className="error-message text-red-300 text-xs mt-1.5 ml-1 flex items-center gap-1 animate-fade-in">
+                            <p className="error-message text-red-300 text-xs mt-2 ml-1 flex items-center gap-1 animate-fade-in">
                                 <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                                 </svg>
@@ -618,18 +726,13 @@ export default function AffiliateRegisterForm() {
                                 กำลังดำเนินการ...
                             </>
                         ) : (
-                            <>
-                                <svg className="w-5 h-5 md:w-6 md:h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                </svg>
-                                ลงทะเบียนเป็นพันธมิตร
-                            </>
+                            'สมัครพันธมิตรรับสิทธิ์ทันที'
                         )}
                     </button>
 
                     {/* Privacy Note */}
                     <p className="text-xs md:text-sm text-white/60 text-center mt-3 md:mt-4 flex items-center justify-center gap-1.5">
-                        <svg className="w-4 h-4 md:w-5 md:h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="w-4 h-4 md:w-5 md:h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                         </svg>
                         <span>ข้อมูลของคุณจะถูกเก็บรักษาอย่างปลอดภัย</span>
@@ -638,7 +741,7 @@ export default function AffiliateRegisterForm() {
 
                 {/* Footer */}
                 <p className="text-center text-white/40 text-xs md:text-sm mt-6 md:mt-8">
-                    © 2024 AIYA Co., Ltd. สงวนลิขสิทธิ์
+                    © 2025 MeGenius Company Limited. All rights reserved
                 </p>
             </div>
         </div>

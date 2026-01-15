@@ -1,10 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import liff from '@line/liff';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 export default function ThankYou() {
     const navigate = useNavigate();
     const location = useLocation();
+    const [copied, setCopied] = useState(false);
 
     // Protected Route: Redirect if accessed directly without registration data
     const hasRegistered = !!location.state?.name;
@@ -23,6 +24,16 @@ export default function ThankYou() {
     // Get data from previous state
     const name = location.state?.name || '';
     const affiliateCode = location.state?.affiliateCode || '';
+
+    const handleCopyCode = async () => {
+        try {
+            await navigator.clipboard.writeText(affiliateCode);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
+        } catch (err) {
+            console.error('Failed to copy:', err);
+        }
+    };
 
     const handleClose = () => {
         // Check if device is desktop (width >= 1024px)
@@ -79,7 +90,29 @@ export default function ThankYou() {
 
                     <div className="text-center">
                         <p className="text-xs sm:text-sm md:text-base text-gray-400 uppercase tracking-widest font-bold mb-3 md:mb-4">รหัสพันธมิตรของคุณ</p>
-                        <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white font-mono tracking-wider mb-2 md:mb-3 break-all">{affiliateCode}</p>
+                        <div className="flex items-center justify-center gap-3 mb-2 md:mb-3">
+                            <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white font-mono tracking-wider break-all">{affiliateCode}</p>
+                            <button
+                                onClick={handleCopyCode}
+                                className="shrink-0 p-2 sm:p-3 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/30 transition-all duration-200 active:scale-95 group relative"
+                                title="Copy code"
+                            >
+                                {copied ? (
+                                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                ) : (
+                                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white/80 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                )}
+                                {copied && (
+                                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap animate-fade-in">
+                                        คัดลอกแล้ว!
+                                    </span>
+                                )}
+                            </button>
+                        </div>
                         <p className="text-sm sm:text-base md:text-lg text-gray-400">แชร์รหัสนี้เพื่อรับค่าคอมมิชชั่น</p>
                     </div>
                 </div>
