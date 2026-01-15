@@ -268,12 +268,12 @@ export default function AffiliateRegisterForm() {
     }
 
     return (
-        <div className="min-h-screen px-4 py-6">
-            <div className="w-full mx-auto relative z-10 animate-fade-in">
+        <div className="min-h-screen px-4 py-6 md:px-6 lg:px-8">
+            <div className="w-full max-w-5xl mx-auto relative z-10 animate-fade-in">
 
 
                 {/* Event Info Card */}
-                <div className="mb-6">
+                <div className="mb-6 md:mb-8">
                     {/* Banner Image */}
                     <div className="overflow-hidden rounded-2xl">
                         <img
@@ -284,26 +284,26 @@ export default function AffiliateRegisterForm() {
                     </div>
 
                     {/* Text Content Below Banner */}
-                    <div className="p-4 sm:p-6">
+                    <div className="p-4 sm:p-6 md:p-8">
                         <div className="text-center">
-                            <h2 className="text-white text-xl sm:text-2xl md:text-3xl font-bold mb-4 leading-tight">
+                            <h2 className="text-white text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-4 md:mb-6 leading-tight">
                                 มาเป็นพันธิมิตรกับเรา<br />เพื่อก้าวไปข้างหน้าด้วยกัน
                             </h2>
-                            <div className="text-white/90 text-sm sm:text-base space-y-2.5 text-left inline-block">
-                                <div className="flex items-start gap-3">
-                                    <svg className="w-6 h-6 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="#8c52ff" strokeWidth={2.5}>
+                            <div className="text-white/90 text-sm sm:text-base md:text-lg space-y-2.5 md:space-y-3 text-left inline-block">
+                                <div className="flex items-start gap-3 md:gap-4">
+                                    <svg className="w-6 h-6 md:w-7 md:h-7 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="#8c52ff" strokeWidth={2.5}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                     <span>ได้ค่าคอมมิชชั่น</span>
                                 </div>
-                                <div className="flex items-start gap-3">
-                                    <svg className="w-6 h-6 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="#8c52ff" strokeWidth={2.5}>
+                                <div className="flex items-start gap-3 md:gap-4">
+                                    <svg className="w-6 h-6 md:w-7 md:h-7 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="#8c52ff" strokeWidth={2.5}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                                     </svg>
                                     <span>ได้ส่วนลดให้ผู้สมัครคอร์ส</span>
                                 </div>
-                                <div className="flex items-start gap-3">
-                                    <svg className="w-6 h-6 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="#8c52ff" strokeWidth={2.5}>
+                                <div className="flex items-start gap-3 md:gap-4">
+                                    <svg className="w-6 h-6 md:w-7 md:h-7 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="#8c52ff" strokeWidth={2.5}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                                     </svg>
                                     <span>ผู้สมัครได้ความรู้ AI ช่วยธุรกิจของคุณให้สำเร็จ</span>
@@ -317,9 +317,9 @@ export default function AffiliateRegisterForm() {
                 {isReady && isInClient && !isLoggedIn && (
                     <button
                         onClick={login}
-                        className="mb-4 w-full flex items-center justify-center gap-2 bg-[#06C755] hover:bg-[#05b34b] text-white font-medium px-4 py-2.5 rounded-lg transition-colors duration-200 text-sm"
+                        className="mb-4 md:mb-6 w-full flex items-center justify-center gap-2 bg-[#06C755] hover:bg-[#05b34b] text-white font-medium px-4 py-2.5 md:py-3 rounded-lg transition-colors duration-200 text-sm md:text-base"
                     >
-                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                        <svg className="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
                         </svg>
                         เข้าสู่ระบบด้วย LINE
@@ -328,20 +328,20 @@ export default function AffiliateRegisterForm() {
 
                 {/* LINE Profile Display - Only show in LINE client (LIFF) */}
                 {isReady && isInClient && isLoggedIn && profile && (
-                    <div className="mb-4 bg-white/10 rounded-lg p-2.5 backdrop-blur-sm shadow-md">
-                        <div className="flex items-center gap-2">
+                    <div className="mb-4 md:mb-6 bg-white/10 rounded-lg p-2.5 md:p-3 backdrop-blur-sm shadow-md">
+                        <div className="flex items-center gap-2 md:gap-3">
                             {profile.pictureUrl && (
                                 <img
                                     src={profile.pictureUrl}
                                     alt={profile.displayName}
-                                    className="w-8 h-8 rounded-full"
+                                    className="w-8 h-8 md:w-10 md:h-10 rounded-full"
                                 />
                             )}
                             <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                                <svg className="w-4 h-4 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <svg className="w-4 h-4 md:w-5 md:h-5 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                 </svg>
-                                <span className="text-xs text-white truncate">
+                                <span className="text-xs md:text-sm text-white truncate">
                                     {profile.displayName}
                                 </span>
                             </div>
@@ -350,13 +350,13 @@ export default function AffiliateRegisterForm() {
                 )}
 
                 {/* Form */}
-                <form ref={formRef} onSubmit={handleSubmit} className="glass-card p-5 sm:p-6 lg:p-8 space-y-5" noValidate>
-                    <h2 className="text-lg sm:text-xl font-bold text-white mb-3">กรอกข้อมูลการสมัคร</h2>
+                <form ref={formRef} onSubmit={handleSubmit} className="glass-card p-5 sm:p-6 md:p-8 lg:p-10 space-y-5 md:space-y-6" noValidate>
+                    <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white mb-3 md:mb-4">กรอกข้อมูลการสมัคร</h2>
 
                     {/* Global Error */}
                     {submitError && (
-                        <div className="error-message bg-red-500/20 border border-red-400/50 text-red-300 rounded-xl p-3 flex items-start gap-2 text-sm animate-fade-in">
-                            <svg className="w-5 h-5 text-red-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <div className="error-message bg-red-500/20 border border-red-400/50 text-red-300 rounded-xl p-3 md:p-4 flex items-start gap-2 md:gap-3 text-sm md:text-base animate-fade-in">
+                            <svg className="w-5 h-5 md:w-6 md:h-6 text-red-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                             </svg>
                             <span>{submitError}</span>
@@ -486,31 +486,31 @@ export default function AffiliateRegisterForm() {
                     </div>
 
                     {/* Package Information Card */}
-                    <div className="bg-gradient-to-r from-aiya-purple/10 to-aiya-navy/10 rounded-2xl p-5 border border-aiya-purple/20">
-                        <div className="flex items-start gap-3 mb-3">
-                            <div className="w-10 h-10 rounded-xl bg-aiya-purple/20 flex items-center justify-center shrink-0">
-                                <span className="text-xl">🎁</span>
+                    <div className="bg-gradient-to-r from-aiya-purple/10 to-aiya-navy/10 rounded-2xl p-5 md:p-6 lg:p-8 border border-aiya-purple/20">
+                        <div className="flex items-start gap-3 md:gap-4 mb-3 md:mb-4">
+                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-aiya-purple/20 flex items-center justify-center shrink-0">
+                                <span className="text-xl md:text-2xl">🎁</span>
                             </div>
                             <div>
-                                <h3 className="font-bold text-white text-base mb-1">รหัสพันธมิตรใช้ได้ทั้ง 2 แพ็กเกจ</h3>
-                                <p className="text-white/70 text-sm">ลูกค้าของคุณสามารถใช้รหัสนี้เพื่อรับส่วนลดได้ทั้งแพ็กเกจเดี่ยวและแพ็กเกจคู่</p>
+                                <h3 className="font-bold text-white text-base md:text-lg lg:text-xl mb-1">รหัสพันธมิตรใช้ได้ทั้ง 2 แพ็กเกจ</h3>
+                                <p className="text-white/70 text-sm md:text-base">ลูกค้าของคุณสามารถใช้รหัสนี้เพื่อรับส่วนลดได้ทั้งแพ็กเกจเดี่ยวและแพ็กเกจคู่</p>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                             {/* Single Package */}
-                            <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+                            <div className="bg-white/5 rounded-xl p-3 md:p-4 lg:p-5 border border-white/10">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <span className="text-lg">👤</span>
-                                    <h4 className="font-bold text-white text-sm">Single Package</h4>
+                                    <span className="text-lg md:text-xl">👤</span>
+                                    <h4 className="font-bold text-white text-sm md:text-base lg:text-lg">Single Package</h4>
                                 </div>
-                                <p className="text-white/60 text-xs mb-2">1 ที่นั่ง</p>
-                                <div className="space-y-1">
-                                    <div className="flex justify-between items-center text-xs">
+                                <p className="text-white/60 text-xs md:text-sm mb-2">1 ที่นั่ง</p>
+                                <div className="space-y-1 md:space-y-2">
+                                    <div className="flex justify-between items-center text-xs md:text-sm lg:text-base">
                                         <span className="text-white/70">Commission</span>
                                         <span className="font-bold text-green-400">3,000 บาท</span>
                                     </div>
-                                    <div className="flex justify-between items-center text-xs">
+                                    <div className="flex justify-between items-center text-xs md:text-sm lg:text-base">
                                         <span className="text-white/70">ส่วนลดลูกค้า</span>
                                         <span className="font-semibold text-orange-400">-1,000 บาท</span>
                                     </div>
@@ -518,18 +518,18 @@ export default function AffiliateRegisterForm() {
                             </div>
 
                             {/* Duo Package */}
-                            <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+                            <div className="bg-white/5 rounded-xl p-3 md:p-4 lg:p-5 border border-white/10">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <span className="text-lg">👥</span>
-                                    <h4 className="font-bold text-white text-sm">Duo Package</h4>
+                                    <span className="text-lg md:text-xl">👥</span>
+                                    <h4 className="font-bold text-white text-sm md:text-base lg:text-lg">Duo Package</h4>
                                 </div>
-                                <p className="text-white/60 text-xs mb-2">2 ที่นั่ง</p>
-                                <div className="space-y-1">
-                                    <div className="flex justify-between items-center text-xs">
+                                <p className="text-white/60 text-xs md:text-sm mb-2">2 ที่นั่ง</p>
+                                <div className="space-y-1 md:space-y-2">
+                                    <div className="flex justify-between items-center text-xs md:text-sm lg:text-base">
                                         <span className="text-white/70">Commission</span>
                                         <span className="font-bold text-green-400">7,000 บาท</span>
                                     </div>
-                                    <div className="flex justify-between items-center text-xs">
+                                    <div className="flex justify-between items-center text-xs md:text-sm lg:text-base">
                                         <span className="text-white/70">ส่วนลดลูกค้า</span>
                                         <span className="font-semibold text-orange-400">-1,000 บาท</span>
                                     </div>
@@ -540,14 +540,14 @@ export default function AffiliateRegisterForm() {
 
                     {/* หมายเหตุ (ไม่บังคับ) */}
                     <div>
-                        <label className="label-modern">หมายเหตุ (ไม่บังคับ)</label>
+                        <label className="label-modern text-sm md:text-base">หมายเหตุ (ไม่บังคับ)</label>
                         <textarea
                             ref={noteRef}
                             name="note"
                             value={formData.note}
                             onChange={handleChange}
                             enterKeyHint="done"
-                            className="input-modern min-h-[80px] resize-y"
+                            className="input-modern min-h-[80px] md:min-h-[100px] resize-y text-sm md:text-base"
                             placeholder="บันทึกเพิ่มเติม..."
                         />
                     </div>
@@ -555,9 +555,9 @@ export default function AffiliateRegisterForm() {
                     {/* PDPA Consent Checkbox */}
                     <div>
                         <div
-                            className={`bg-white/5 rounded-xl p-4 transition-all ${showError('pdpaConsent') ? 'ring-2 ring-red-400/50' : ''}`}
+                            className={`bg-white/5 rounded-xl p-4 md:p-5 transition-all ${showError('pdpaConsent') ? 'ring-2 ring-red-400/50' : ''}`}
                         >
-                            <label className="flex items-start gap-3 cursor-pointer group">
+                            <label className="flex items-start gap-3 md:gap-4 cursor-pointer group">
                                 <input
                                     type="checkbox"
                                     name="pdpaConsent"
@@ -571,9 +571,9 @@ export default function AffiliateRegisterForm() {
                                     onBlur={() => handleBlur('pdpaConsent')}
                                     className="peer sr-only"
                                 />
-                                <div className="relative flex-shrink-0 mt-0.5 w-5 h-5 rounded-md flex items-center justify-center bg-white/10 group-hover:bg-white/20 peer-checked:bg-gradient-to-br peer-checked:from-aiya-purple peer-checked:to-purple-600 transition-all duration-200 shadow-inner">
+                                <div className="relative flex-shrink-0 mt-0.5 w-5 h-5 md:w-6 md:h-6 rounded-md flex items-center justify-center bg-white/10 group-hover:bg-white/20 peer-checked:bg-gradient-to-br peer-checked:from-aiya-purple peer-checked:to-purple-600 transition-all duration-200 shadow-inner">
                                     <svg
-                                        className="w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity duration-200"
+                                        className="w-3.5 h-3.5 md:w-4 md:h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity duration-200"
                                         fill="none"
                                         viewBox="0 0 24 24"
                                         stroke="currentColor"
@@ -582,7 +582,7 @@ export default function AffiliateRegisterForm() {
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                     </svg>
                                 </div>
-                                <span className="text-sm text-white/90 leading-relaxed">
+                                <span className="text-sm md:text-base text-white/90 leading-relaxed">
                                     ข้าพเจ้ายอมรับ{' '}
                                     <a
                                         href="https://web.aiya.ai/privacy-policy"
@@ -621,11 +621,11 @@ export default function AffiliateRegisterForm() {
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="btn-gradient disabled:opacity-60 disabled:cursor-not-allowed mt-2 min-h-[48px]"
+                        className="btn-gradient disabled:opacity-60 disabled:cursor-not-allowed mt-2 min-h-[48px] md:min-h-[56px] text-base md:text-lg"
                     >
                         {isLoading ? (
                             <>
-                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <svg className="animate-spin h-5 w-5 md:h-6 md:w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
@@ -633,7 +633,7 @@ export default function AffiliateRegisterForm() {
                             </>
                         ) : (
                             <>
-                                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <svg className="w-5 h-5 md:w-6 md:h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                 </svg>
                                 ลงทะเบียนเป็นพันธมิตร
@@ -642,8 +642,8 @@ export default function AffiliateRegisterForm() {
                     </button>
 
                     {/* Privacy Note */}
-                    <p className="text-xs text-white/60 text-center mt-3 flex items-center justify-center gap-1.5">
-                        <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                    <p className="text-xs md:text-sm text-white/60 text-center mt-3 md:mt-4 flex items-center justify-center gap-1.5">
+                        <svg className="w-4 h-4 md:w-5 md:h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                         </svg>
                         <span>ข้อมูลของคุณจะถูกเก็บรักษาอย่างปลอดภัย</span>
@@ -651,7 +651,7 @@ export default function AffiliateRegisterForm() {
                 </form>
 
                 {/* Footer */}
-                <p className="text-center text-white/40 text-xs mt-6">
+                <p className="text-center text-white/40 text-xs md:text-sm mt-6 md:mt-8">
                     © 2024 AIYA Co., Ltd. สงวนลิขสิทธิ์
                 </p>
             </div>
