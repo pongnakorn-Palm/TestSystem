@@ -567,102 +567,57 @@ export default function AffiliateRegisterForm() {
                     </div>
 
                     {/* PDPA Consent Checkbox (LIFF Mobile-First) */}
-                    <div className="mt-4">
-                        <label
-                            className={`
-      relative flex gap-4 p-4 rounded-xl
-      cursor-pointer select-none
+                    <label className="relative flex gap-4 p-4 rounded-xl bg-white/5 active:bg-white/10 active:scale-[0.98] cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={formData.pdpaConsent}
+                            onChange={(e) =>
+                                setFormData(prev => ({ ...prev, pdpaConsent: e.target.checked }))
+                            }
+                            className="peer absolute opacity-0 w-0 h-0"
+                        />
+
+                        {/* Checkbox box */}
+                        <div
+                            className="
+      w-6 h-6 flex-shrink-0 rounded-md
+      flex items-center justify-center
+      border-2 border-white/40
+      bg-white/10
       transition-all duration-150
-      bg-white/5
-      active:scale-[0.98]
-      active:bg-white/10
-      ${showError('pdpaConsent') ? 'ring-1 ring-red-400/60' : ''}
-    `}
+
+      peer-checked:bg-[#7C3AED]
+      peer-checked:border-[#7C3AED]
+      peer-checked:shadow-[0_0_0_4px_rgba(124,58,237,0.35)]
+    "
                         >
-                            <input
-                                type="checkbox"
-                                name="pdpaConsent"
-                                checked={formData.pdpaConsent}
-                                onChange={(e) => {
-                                    setFormData(prev => ({ ...prev, pdpaConsent: e.target.checked }));
-                                    if (errors.pdpaConsent) {
-                                        setErrors(prev => ({ ...prev, pdpaConsent: undefined }));
-                                    }
-                                }}
-                                onBlur={() => handleBlur('pdpaConsent')}
-                                className="peer sr-only"
-                            />
-
-                            {/* Checkbox */}
-                            <div
-                                className={`
-        mt-1 w-6 h-6 flex-shrink-0 rounded-md
-        flex items-center justify-center
-        border-2 transition-all duration-150
-
-        bg-white/10 border-white/40
-        peer-checked:bg-[#7C3AED]
-        peer-checked:border-[#7C3AED]
-
-        shadow-sm
-        peer-checked:shadow-[0_0_0_4px_rgba(124,58,237,0.3)]
-
-        peer-focus-visible:ring-2
-        peer-focus-visible:ring-[#7C3AED]/70
-        peer-focus-visible:ring-offset-2
-        peer-focus-visible:ring-offset-[#0F1020]
-      `}
+                            {/* Check icon */}
+                            <svg
+                                className="
+        w-4 h-4 text-white
+        scale-0 opacity-0
+        peer-checked:scale-100
+        peer-checked:opacity-100
+        transition-all duration-150 ease-out
+      "
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="3"
                             >
-                                <svg
-                                    className="
-          w-4 h-4 text-white
-          opacity-0 scale-50
-          peer-checked:opacity-100
-          peer-checked:scale-100
-          transition-all duration-150
-        "
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                    strokeWidth="3"
-                                >
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                            </div>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
 
-                            {/* Text */}
-                            <span className="text-sm text-white/90 leading-relaxed">
-                                ข้าพเจ้ายอมรับ{' '}
-                                <a
-                                    href="https://web.aiya.ai/privacy-policy"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-400 underline font-medium"
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    เงื่อนไขการใช้งาน
-                                </a>{' '}
-                                และ{' '}
-                                <a
-                                    href="https://web.aiya.ai/privacy-policy"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-400 underline font-medium"
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    นโยบายความเป็นส่วนตัว
-                                </a>{' '}
-                                ของ AIYA <span className="text-red-400">*</span>
-                            </span>
-                        </label>
+                        {/* Text */}
+                        <span className="text-sm text-white/90 leading-relaxed">
+                            ข้าพเจ้ายอมรับ{' '}
+                            <span className="text-blue-400 underline">เงื่อนไขการใช้งาน</span> และ{' '}
+                            <span className="text-blue-400 underline">นโยบายความเป็นส่วนตัว</span> ของ AIYA
+                            <span className="text-red-400">*</span>
+                        </span>
+                    </label>
 
-                        {/* Error */}
-                        {showError('pdpaConsent') && (
-                            <p className="text-red-300 text-xs mt-2 ml-2 animate-fade-in">
-                                {errors.pdpaConsent}
-                            </p>
-                        )}
-                    </div>
 
 
                     {/* Submit Button */}
