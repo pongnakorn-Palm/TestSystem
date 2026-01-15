@@ -220,6 +220,25 @@ export default function ThankYou() {
                     </ul>
                 </div>
 
+                {/* Payment Info Note */}
+                <div className="bg-blue-900/20 border border-blue-500/30 rounded-xl p-4 sm:p-5 md:p-6 mb-6 md:mb-8">
+                    <div className="flex items-start gap-3 md:gap-4">
+                        {/* Info Icon */}
+                        <div className="shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+                            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+
+                        {/* Text Content */}
+                        <div className="flex-1">
+                            <p className="text-sm sm:text-base md:text-lg text-blue-200 leading-relaxed">
+                                เมื่อท่านเริ่มแนะนำลูกค้าได้แล้ว ทีมงานจะติดต่อกลับไปทางอีเมลเพื่อขอข้อมูลบัญชีธนาคารสำหรับโอนค่าคอมมิชชั่นในรอบการจ่ายเงินถัดไป
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Actions */}
                 <div className="space-y-3">
                     <button
