@@ -1,5 +1,5 @@
 import postgres from "postgres";
-import { randomUUID } from "crypto";
+import { v7 as uuidv7 } from "uuid";
 
 const mainSystemConnectionString = process.env.MAIN_SYSTEM_DB_URL;
 
@@ -70,12 +70,12 @@ export interface AffiliateRecord {
 export async function registerAffiliate(
     data: AffiliateRegistrationInput
 ): Promise<{ id: string; code: string }> {
-    // Generate UUID for the new affiliate
-    const affiliateId = randomUUID();
+    // Generate UUIDv7 for the new affiliate
+    const affiliateId = uuidv7();
 
     try {
         const result = await mainSystemSql`
-            INSERT INTO affiliates (
+            INSERT INTO bootcamp_affiliates (
                 id,
                 name,
                 email,
@@ -93,9 +93,7 @@ export async function registerAffiliate(
                 single_commission_value,
                 single_discount_value,
                 duo_commission_value,
-                duo_discount_value,
-                created_at,
-                updated_at
+                duo_discount_value
             ) VALUES (
                 ${affiliateId},
                 ${data.name},
@@ -114,15 +112,15 @@ export async function registerAffiliate(
                 300000,
                 100000,
                 700000,
-                200000,
-                NOW(),
-                NOW()
+                200000
             )
             RETURNING id, code
         `;
 
         return result[0];
     } catch (error: any) {
+        console.error("Register affiliate error:", error);
+
         // Handle duplicate code error
         if (error.code === "23505" && error.constraint?.includes("code")) {
             throw new Error("DUPLICATE_CODE");
@@ -144,7 +142,7 @@ export async function registerAffiliate(
 export async function checkAffiliateCodeExists(code: string): Promise<boolean> {
     try {
         const result = await mainSystemSql`
-            SELECT id FROM affiliates WHERE code = ${code} LIMIT 1
+            SELECT id FROM bootcamp_affiliates WHERE code = ${code} LIMIT 1
         `;
         return result.length > 0;
     } catch (error) {
@@ -159,7 +157,7 @@ export async function checkAffiliateCodeExists(code: string): Promise<boolean> {
 export async function checkAffiliateEmailExists(email: string): Promise<boolean> {
     try {
         const result = await mainSystemSql`
-            SELECT id FROM affiliates WHERE email = ${email} LIMIT 1
+            SELECT id FROM bootcamp_affiliates WHERE email = ${email} LIMIT 1
         `;
         return result.length > 0;
     } catch (error) {
