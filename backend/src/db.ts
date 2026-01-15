@@ -32,7 +32,6 @@ export interface AffiliateData {
     email: string;
     phone: string;
     affiliateCode: string;
-    selectedProduct: string | null;
     note: string | null;
 }
 
@@ -44,14 +43,12 @@ export async function insertAffiliate(data: AffiliateData) {
       email,
       phone,
       affiliate_code,
-      selected_product,
       note
     ) VALUES (
       ${data.name},
       ${data.email},
       ${data.phone},
       ${data.affiliateCode},
-      ${data.selectedProduct},
       ${data.note}
     )
     RETURNING id, created_at
