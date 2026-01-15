@@ -123,8 +123,8 @@ export const app = new Elysia()
             // RATE LIMITING CHECK
             // ========================================
             const clientIP = request.headers.get("x-forwarded-for")?.split(",")[0] ||
-                            request.headers.get("x-real-ip") ||
-                            "unknown";
+                request.headers.get("x-real-ip") ||
+                "unknown";
 
             const rateLimitResult = checkRateLimit(clientIP);
             if (!rateLimitResult.allowed) {
@@ -249,11 +249,25 @@ export const app = new Elysia()
             return { exists: false };
         }
 
-        const exists = email
+        // Logic ใหม่: เช็คทั้ง Local DB และ Main System DB
+
+        // 1. เช็ค Main System ก่อน (Database ของพี่อีกทีม)
+        if (affiliateCode) {
+            const existsInMain = await checkAffiliateCodeExists(affiliateCode);
+            if (existsInMain) return { exists: true };
+        }
+
+        if (email) {
+            const emailExistsInMain = await checkAffiliateEmailExists(email);
+            if (emailExistsInMain) return { exists: true };
+        }
+
+        // 2. ถ้าไม่เจอใน Main System ค่อยมาเช็คใน Local DB ของเรา (เผื่อมีคนเพิ่งสมัครตะกี้)
+        const existsInLocal = email
             ? await checkAffiliate(email, undefined)
             : await checkAffiliate(undefined, affiliateCode);
 
-        return { exists };
+        return { exists: existsInLocal };
     })
     // Register Affiliate to Main System endpoint
     .post(

@@ -335,10 +335,14 @@ export default function AffiliateRegisterForm() {
 
                             {/* SECTION 1: The Hook - Gradient & Impact */}
                             <div className="space-y-3 md:space-y-4">
-                                {/* Headline with Futuristic Cyan-to-Purple Gradient */}
-                                <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight">
-                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600">
-                                        🚀 โอกาสทอง! ร่วมเป็นส่วนหนึ่งของ AI EMPIRE
+                                {/* Headline with Gradient on AI Empire only */}
+                                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-extrabold leading-relaxed text-white py-2">
+                                    🚀 โอกาสทอง!{' '}
+                                    <span className="inline-block mt-1 md:mt-0">
+                                        ร่วมเป็นส่วนหนึ่งของ{' '}
+                                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 whitespace-nowrap">
+                                            AI EMPIRE
+                                        </span>
                                     </span>
                                 </h2>
 
@@ -492,7 +496,7 @@ export default function AffiliateRegisterForm() {
                         {/* Email */}
                         <div>
                             <label className="label-modern">
-                                Email <span className="text-red-500">*</span>
+                                อีเมล <span className="text-red-500">*</span>
                             </label>
                             <input
                                 ref={emailRef}
