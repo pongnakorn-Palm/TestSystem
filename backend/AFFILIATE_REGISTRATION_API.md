@@ -95,21 +95,21 @@ POST /api/register-affiliate-main
 ### Business Logic Defaults
 
 #### Commission & Discount Settings
-All monetary values are stored as integers representing cents (e.g., 5000 = 50.00 THB)
+All monetary values are stored as integers representing cents (e.g., 300000 = 3,000.00 THB)
 
 | Field | Value | Description |
 |-------|-------|-------------|
 | `is_active` | `true` | Auto-approved for immediate use |
 | `commission_type` | `'fixed'` | Fixed commission amount |
-| `commission_value` | `5000` | Default: 50 THB |
+| `commission_value` | `300000` | Default: 3,000 THB |
 | `discount_type` | `'fixed'` | Fixed discount amount |
-| `discount_value` | `10000` | Default: 100 THB |
+| `discount_value` | `100000` | Default: 1,000 THB |
 
 #### Package-Specific Settings
-| Package | Commission | Discount |
-|---------|------------|----------|
-| Single | 5000 (50 THB) | 10000 (100 THB) |
-| Duo | 10000 (100 THB) | 20000 (200 THB) |
+| Package | Commission | Discount | Price After Discount |
+|---------|------------|----------|---------------------|
+| Single (29,900 THB) | 300000 (3,000 THB) | 100000 (1,000 THB) | 28,900 THB |
+| Duo (54,900 THB) | 700000 (7,000 THB) | 200000 (2,000 THB) | 52,900 THB |
 
 #### Statistics (Initial Values)
 | Field | Value |

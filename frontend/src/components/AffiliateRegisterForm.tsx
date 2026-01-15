@@ -176,29 +176,66 @@ export default function AffiliateRegisterForm() {
 
         try {
             const apiUrl = import.meta.env.VITE_API_URL || '';
-            const response = await fetch(`${apiUrl}/api/register-affiliate`, {
+
+            // ========================================
+            // STEP 1: บันทึกลง Event Registration DB (เก็บข้อมูลไว้ที่ฉัน)
+            // ========================================
+            const eventDbResponse = await fetch(`${apiUrl}/api/register-affiliate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
             });
 
-            const data = await response.json();
+            const eventDbData = await eventDbResponse.json();
 
-            if (!response.ok) {
+            if (!eventDbResponse.ok) {
                 // Handle 409 Conflict (duplicate data)
-                if (response.status === 409 && data.field) {
-                    // Set field-specific error
+                if (eventDbResponse.status === 409 && eventDbData.field) {
                     setErrors(prev => ({
                         ...prev,
-                        [data.field]: data.message
+                        [eventDbData.field]: eventDbData.message
                     }));
-                    setTouched(prev => new Set(prev).add(data.field));
-                    throw new Error(data.message);
+                    setTouched(prev => new Set(prev).add(eventDbData.field));
+                    throw new Error(eventDbData.message);
                 }
 
-                throw new Error(data.message || 'การลงทะเบียนล้มเหลว กรุณาลองใหม่อีกครั้ง');
+                throw new Error(eventDbData.message || 'การลงทะเบียนล้มเหลว กรุณาลองใหม่อีกครั้ง');
             }
 
+            console.log('✅ Event DB registered:', eventDbData);
+
+            // ========================================
+            // STEP 2: ยิงไปที่ Main System DB (ให้ affiliate code ใช้งานได้จริง)
+            // ========================================
+            try {
+                const mainSystemResponse = await fetch(`${apiUrl}/api/register-affiliate-main`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: formData.name,
+                        email: formData.email,
+                        tel: formData.phone,  // แปลง phone -> tel
+                        generatedCode: formData.affiliateCode  // แปลง affiliateCode -> generatedCode
+                    })
+                });
+
+                const mainSystemData = await mainSystemResponse.json();
+
+                if (!mainSystemResponse.ok) {
+                    console.warn('⚠️ Main System DB registration failed:', mainSystemData);
+                    // ไม่ throw error เพราะข้อมูลถูกบันทึกที่ event DB แล้ว
+                    // แจ้งเตือนแต่ให้ดำเนินการต่อ
+                } else {
+                    console.log('✅ Main System DB registered:', mainSystemData);
+                }
+            } catch (mainSystemError) {
+                console.error('❌ Main System DB error:', mainSystemError);
+                // ไม่ throw error เพราะข้อมูลถูกบันทึกที่ event DB แล้ว
+            }
+
+            // ========================================
+            // STEP 3: Navigate to Thank You page
+            // ========================================
             navigate('/thank-you', {
                 state: {
                     name: formData.name,

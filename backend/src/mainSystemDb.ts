@@ -63,10 +63,9 @@ export interface AffiliateRecord {
  *
  * Business Logic:
  * - Auto-approve (is_active: true)
- * - Default commission: 50 THB (5000 cents)
- * - Default discount: 100 THB (10000 cents)
- * - Single package: 50 THB commission, 100 THB discount
- * - Duo package: 100 THB commission, 200 THB discount
+ * - Commission: Single 3,000 THB, Duo 7,000 THB
+ * - Discount: Single 1,000 THB, Duo 2,000 THB
+ * - All values stored as cents (multiply by 100)
  */
 export async function registerAffiliate(
     data: AffiliateRegistrationInput
@@ -104,18 +103,18 @@ export async function registerAffiliate(
                 ${data.tel || null},
                 ${data.generatedCode},
                 'fixed',
-                5000,
+                300000,
                 'fixed',
-                10000,
+                100000,
                 0,
                 0,
                 0,
                 0,
                 true,
-                5000,
-                10000,
-                10000,
-                20000,
+                300000,
+                100000,
+                700000,
+                200000,
                 NOW(),
                 NOW()
             )
