@@ -7,7 +7,6 @@ interface FormData {
     email: string;
     phone: string;
     affiliateCode: string;
-    selectedProduct: string;
     note: string;
     pdpaConsent: boolean;
 }
@@ -17,28 +16,9 @@ interface FormErrors {
     email?: string;
     phone?: string;
     affiliateCode?: string;
-    selectedProduct?: string;
     pdpaConsent?: string;
 }
 
-const PACKAGE_OPTIONS = {
-    single_package: {
-        label: 'Single Package',
-        subtitle: '1 ที่นั่ง',
-        commission: '3,000',
-        customerDiscount: '1,000',
-        icon: '👤'
-    },
-    duo_package: {
-        label: 'Duo Package',
-        subtitle: '2 ที่นั่ง',
-        commission: '7,000',
-        customerDiscount: '1,000',
-        icon: '👥'
-    }
-};
-
-type PackageType = keyof typeof PACKAGE_OPTIONS;
 
 export default function AffiliateRegisterForm() {
     const navigate = useNavigate();
@@ -57,7 +37,6 @@ export default function AffiliateRegisterForm() {
         email: '',
         phone: '',
         affiliateCode: '',
-        selectedProduct: '',
         note: '',
         pdpaConsent: false
     });
@@ -126,11 +105,6 @@ export default function AffiliateRegisterForm() {
                     error = 'ใช้ได้เฉพาะตัวอักษร A-Z และตัวเลข 0-9';
                 }
                 break;
-            case 'selectedProduct':
-                if (!value) {
-                    error = 'กรุณาเลือก Package';
-                }
-                break;
             case 'pdpaConsent':
                 if (!value) {
                     error = 'กรุณายอมรับเงื่อนไขการใช้งานและนโยบายความเป็นส่วนตัว';
@@ -146,14 +120,14 @@ export default function AffiliateRegisterForm() {
         let isValid = true;
 
         // Validate all required fields
-        ['name', 'email', 'phone', 'affiliateCode', 'selectedProduct', 'pdpaConsent'].forEach(field => {
+        ['name', 'email', 'phone', 'affiliateCode', 'pdpaConsent'].forEach(field => {
             if (!validateField(field, formData[field as keyof FormData])) {
                 isValid = false;
             }
         });
 
         // Mark all fields as touched
-        setTouched(new Set(['name', 'email', 'phone', 'affiliateCode', 'selectedProduct', 'pdpaConsent']));
+        setTouched(new Set(['name', 'email', 'phone', 'affiliateCode', 'pdpaConsent']));
 
         return isValid;
     };
@@ -169,13 +143,6 @@ export default function AffiliateRegisterForm() {
         setSubmitError('');
     };
 
-    const handlePackageSelect = (packageType: string) => {
-        setFormData(prev => ({ ...prev, selectedProduct: packageType }));
-        if (errors.selectedProduct) {
-            setErrors(prev => ({ ...prev, selectedProduct: undefined }));
-        }
-        setSubmitError('');
-    };
 
     const scrollToError = () => {
         setTimeout(() => {
@@ -235,9 +202,7 @@ export default function AffiliateRegisterForm() {
             navigate('/thank-you', {
                 state: {
                     name: formData.name,
-                    affiliateCode: formData.affiliateCode,
-                    selectedProduct: formData.selectedProduct,
-                    commission: PACKAGE_OPTIONS[formData.selectedProduct as PackageType].commission
+                    affiliateCode: formData.affiliateCode
                 }
             });
 
@@ -471,59 +436,57 @@ export default function AffiliateRegisterForm() {
                         </div>
                     </div>
 
-                    {/* Package Selection - Card Based */}
-                    <div>
-                        <label className="label-modern mb-3">
-                            เลือก Package <span className="text-red-400">*</span>
-                        </label>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {Object.entries(PACKAGE_OPTIONS).map(([key, pkg]) => (
-                                <button
-                                    key={key}
-                                    type="button"
-                                    onClick={() => handlePackageSelect(key)}
-                                    className={`relative p-4 rounded-xl transition-all duration-200 text-left ${formData.selectedProduct === key
-                                        ? 'bg-white/15 shadow-xl'
-                                        : 'bg-white/5 shadow-md hover:bg-white/10'
-                                        }`}
-                                >
-                                    {/* Checkmark Circle Indicator */}
-                                    <div className="absolute top-3 right-3">
-                                        {formData.selectedProduct === key && (
-                                            <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center">
-                                                <svg className="w-4 h-4 text-aiya-navy" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                </svg>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Package name */}
-                                    <h3 className="font-bold text-white text-lg mb-1">{pkg.label}</h3>
-                                    <p className="text-sm text-white/60 mb-3">{pkg.subtitle}</p>
-
-                                    {/* Commission info */}
-                                    <div className="space-y-1">
-                                        <div className="flex justify-between items-center text-sm">
-                                            <span className="text-white/70">Commission</span>
-                                            <span className="font-bold text-green-400">{pkg.commission} บาท</span>
-                                        </div>
-                                        <div className="flex justify-between items-center text-sm">
-                                            <span className="text-white/70">ส่วนลดลูกค้า</span>
-                                            <span className="font-semibold text-orange-400">-{pkg.customerDiscount} บาท</span>
-                                        </div>
-                                    </div>
-                                </button>
-                            ))}
+                    {/* Package Information Card */}
+                    <div className="bg-gradient-to-r from-aiya-purple/10 to-aiya-navy/10 rounded-2xl p-5 border border-aiya-purple/20">
+                        <div className="flex items-start gap-3 mb-3">
+                            <div className="w-10 h-10 rounded-xl bg-aiya-purple/20 flex items-center justify-center shrink-0">
+                                <span className="text-xl">🎁</span>
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-white text-base mb-1">รหัสพันธมิตรใช้ได้ทั้ง 2 แพ็กเกจ</h3>
+                                <p className="text-white/70 text-sm">ลูกค้าของคุณสามารถใช้รหัสนี้เพื่อรับส่วนลดได้ทั้งแพ็กเกจเดี่ยวและแพ็กเกจคู่</p>
+                            </div>
                         </div>
-                        {showError('selectedProduct') && (
-                            <p className="error-message text-red-300 text-xs mt-2 ml-1 flex items-center gap-1 animate-fade-in">
-                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                                </svg>
-                                {errors.selectedProduct}
-                            </p>
-                        )}
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {/* Single Package */}
+                            <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-lg">👤</span>
+                                    <h4 className="font-bold text-white text-sm">Single Package</h4>
+                                </div>
+                                <p className="text-white/60 text-xs mb-2">1 ที่นั่ง</p>
+                                <div className="space-y-1">
+                                    <div className="flex justify-between items-center text-xs">
+                                        <span className="text-white/70">Commission</span>
+                                        <span className="font-bold text-green-400">3,000 บาท</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-xs">
+                                        <span className="text-white/70">ส่วนลดลูกค้า</span>
+                                        <span className="font-semibold text-orange-400">-1,000 บาท</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Duo Package */}
+                            <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-lg">👥</span>
+                                    <h4 className="font-bold text-white text-sm">Duo Package</h4>
+                                </div>
+                                <p className="text-white/60 text-xs mb-2">2 ที่นั่ง</p>
+                                <div className="space-y-1">
+                                    <div className="flex justify-between items-center text-xs">
+                                        <span className="text-white/70">Commission</span>
+                                        <span className="font-bold text-green-400">7,000 บาท</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-xs">
+                                        <span className="text-white/70">ส่วนลดลูกค้า</span>
+                                        <span className="font-semibold text-orange-400">-1,000 บาท</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     {/* หมายเหตุ (ไม่บังคับ) */}
@@ -543,7 +506,7 @@ export default function AffiliateRegisterForm() {
                     {/* PDPA Consent Checkbox */}
                     <div>
                         <div
-                            className={`bg-white/5 border ${showError('pdpaConsent') ? 'border-red-400/50' : 'border-white/10'} rounded-xl p-4 transition-colors`}
+                            className={`bg-white/5 rounded-xl p-4 transition-all ${showError('pdpaConsent') ? 'ring-2 ring-red-400/50' : ''}`}
                         >
                             <label className="flex items-start gap-3 cursor-pointer group">
                                 <input
@@ -559,13 +522,15 @@ export default function AffiliateRegisterForm() {
                                     onBlur={() => handleBlur('pdpaConsent')}
                                     className="peer sr-only"
                                 />
-                                <div className="relative flex-shrink-0 mt-0.5 w-6 h-6 border-2 border-white/30 rounded-md flex items-center justify-center group-hover:border-aiya-purple/50 peer-checked:bg-gradient-to-r peer-checked:from-aiya-purple peer-checked:to-purple-600 peer-checked:border-aiya-purple transition-all">
+                                <div className="relative flex-shrink-0 mt-0.5 w-5 h-5 rounded-md flex items-center justify-center bg-white/10 group-hover:bg-white/20 peer-checked:bg-gradient-to-br peer-checked:from-aiya-purple peer-checked:to-purple-600 transition-all duration-200 shadow-inner">
                                     <svg
-                                        className="w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity"
-                                        fill="currentColor"
-                                        viewBox="0 0 20 20"
+                                        className="w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity duration-200"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        strokeWidth="3"
                                     >
-                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                     </svg>
                                 </div>
                                 <span className="text-sm text-white/90 leading-relaxed">
@@ -574,7 +539,7 @@ export default function AffiliateRegisterForm() {
                                         href="https://web.aiya.ai/privacy-policy"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-blue-400 hover:text-blue-300 underline font-medium"
+                                        className="text-blue-400 hover:text-blue-300 underline font-medium transition-colors"
                                         onClick={(e) => e.stopPropagation()}
                                     >
                                         เงื่อนไขการใช้งาน
@@ -584,7 +549,7 @@ export default function AffiliateRegisterForm() {
                                         href="https://web.aiya.ai/privacy-policy"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-blue-400 hover:text-blue-300 underline font-medium"
+                                        className="text-blue-400 hover:text-blue-300 underline font-medium transition-colors"
                                         onClick={(e) => e.stopPropagation()}
                                     >
                                         นโยบายความเป็นส่วนตัว

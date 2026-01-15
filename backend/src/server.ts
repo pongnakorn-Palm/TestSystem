@@ -76,7 +76,7 @@ const affiliateSchema = t.Object({
         maxLength: 50,
         pattern: "^[A-Z0-9]+$"  // Only uppercase A-Z and 0-9
     }),
-    selectedProduct: t.String({ minLength: 1 }),
+    selectedProduct: t.Optional(t.String({ minLength: 1 })),
     note: t.Optional(t.String({ maxLength: 2000 })),
 });
 
@@ -137,14 +137,14 @@ export const app = new Elysia()
                 email: string;
                 phone: string;
                 affiliateCode: string;
-                selectedProduct: string;
+                selectedProduct?: string;
                 note?: string;
             };
 
             // ========================================
-            // STRICT PRODUCT VALIDATION
+            // STRICT PRODUCT VALIDATION (OPTIONAL)
             // ========================================
-            if (!Object.keys(VALID_PRODUCTS).includes(data.selectedProduct)) {
+            if (data.selectedProduct && !Object.keys(VALID_PRODUCTS).includes(data.selectedProduct)) {
                 set.status = 400;
                 return {
                     success: false,
@@ -160,7 +160,7 @@ export const app = new Elysia()
                     email: data.email,
                     phone: data.phone,
                     affiliateCode: data.affiliateCode,
-                    selectedProduct: data.selectedProduct,
+                    selectedProduct: data.selectedProduct || null,
                     note: data.note || null,
                 });
 
@@ -186,14 +186,22 @@ export const app = new Elysia()
                 // ========================================
                 // SEND LINE NOTIFY (FIRE-AND-FORGET)
                 // ========================================
-                const productInfo = VALID_PRODUCTS[data.selectedProduct as ValidProductKey];
+                let productLabel = "ใช้ได้ทั้ง 2 แพ็กเกจ (Single & Duo)";
+                let commissionInfo = "3,000 บาท (Single) / 7,000 บาท (Duo)";
+
+                if (data.selectedProduct) {
+                    const productInfo = VALID_PRODUCTS[data.selectedProduct as ValidProductKey];
+                    productLabel = productInfo.label;
+                    commissionInfo = productInfo.commission;
+                }
+
                 sendLineNotify({
                     affiliateName: data.name,
                     email: data.email,
                     phone: data.phone,
                     affiliateCode: data.affiliateCode,
-                    selectedProduct: productInfo.label,
-                    commission: productInfo.commission,
+                    selectedProduct: productLabel,
+                    commission: commissionInfo,
                 }).catch((error) => {
                     console.error("LINE Notify failed (non-blocking):", error);
                 });

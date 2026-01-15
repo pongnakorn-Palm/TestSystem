@@ -18,14 +18,6 @@ export default function ThankYou() {
     // Get data from previous state
     const name = location.state?.name || '';
     const affiliateCode = location.state?.affiliateCode || '';
-    const selectedProduct = location.state?.selectedProduct || '';
-    const commission = location.state?.commission || '';
-
-    const packageLabel = selectedProduct === 'single_package'
-        ? 'แพ็กเกจเดี่ยว (1 ที่นั่ง)'
-        : 'แพ็กเกจคู่ (2 ที่นั่ง)';
-
-    const customerDiscount = selectedProduct === 'single_package' ? '1,000' : '2,000';
 
     const handleClose = () => {
         if (liff.isInClient()) {
@@ -106,25 +98,60 @@ export default function ThankYou() {
                         </div>
                         <div>
                             <p className="text-xs sm:text-sm font-semibold text-white">ค่าคอมมิชชั่นของคุณ</p>
-                            <p className="text-[10px] sm:text-xs text-gray-400">{commission} บาท ต่อยอดขาย ({packageLabel})</p>
+                            <p className="text-[10px] sm:text-xs text-gray-400">รหัสของคุณใช้ได้ทั้ง 2 แพ็กเกจ</p>
                         </div>
                     </div>
                 </div>
 
-                {/* Package Info Card */}
+                {/* Package Info Card - Both Packages */}
                 <div className="bg-black/20 rounded-2xl p-4 mb-6 border border-white/5 relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-aiya-purple to-aiya-navy"></div>
 
-                    <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center shrink-0 border border-white/5">
-                            <span className="text-xl">📦</span>
+                    <div className="mb-3">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center shrink-0 border border-white/5">
+                                <span className="text-lg">🎁</span>
+                            </div>
+                            <p className="text-xs text-gray-500 uppercase tracking-widest font-bold">รหัสของคุณใช้ได้ทั้ง 2 แพ็กเกจ</p>
                         </div>
-                        <div className="flex-1">
-                            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-1">แพ็กเกจที่เลือก</p>
-                            <h3 className="font-bold text-white leading-tight mb-1 text-sm">{packageLabel}</h3>
-                            <div className="space-y-0.5 text-xs text-gray-400">
-                                <p>💵 คอมมิชชั่น: <span className="text-green-400 font-semibold">{commission} บาท</span></p>
-                                <p>🎁 ส่วนลดลูกค้า: <span className="text-orange-400 font-semibold">{customerDiscount} บาท</span></p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {/* Single Package */}
+                        <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="text-base">👤</span>
+                                <h3 className="font-bold text-white text-xs">Single Package</h3>
+                            </div>
+                            <p className="text-white/60 text-[10px] mb-2">1 ที่นั่ง</p>
+                            <div className="space-y-1">
+                                <div className="flex justify-between items-center text-[10px]">
+                                    <span className="text-white/70">คอมมิชชั่น</span>
+                                    <span className="font-bold text-green-400">3,000 บาท</span>
+                                </div>
+                                <div className="flex justify-between items-center text-[10px]">
+                                    <span className="text-white/70">ส่วนลดลูกค้า</span>
+                                    <span className="font-semibold text-orange-400">-1,000 บาท</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Duo Package */}
+                        <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="text-base">👥</span>
+                                <h3 className="font-bold text-white text-xs">Duo Package</h3>
+                            </div>
+                            <p className="text-white/60 text-[10px] mb-2">2 ที่นั่ง</p>
+                            <div className="space-y-1">
+                                <div className="flex justify-between items-center text-[10px]">
+                                    <span className="text-white/70">คอมมิชชั่น</span>
+                                    <span className="font-bold text-green-400">7,000 บาท</span>
+                                </div>
+                                <div className="flex justify-between items-center text-[10px]">
+                                    <span className="text-white/70">ส่วนลดลูกค้า</span>
+                                    <span className="font-semibold text-orange-400">-1,000 บาท</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -143,7 +170,7 @@ export default function ThankYou() {
                         </li>
                         <li className="flex items-start gap-2">
                             <span className="text-aiya-purple mt-0.5">2.</span>
-                            <span>ลูกค้าใช้รหัสเพื่อรับส่วนลดสูงสุด {customerDiscount} บาท</span>
+                            <span>ลูกค้าใช้รหัสเพื่อรับส่วนลด 1,000 บาท (ทั้ง 2 แพ็กเกจ)</span>
                         </li>
                         <li className="flex items-start gap-2">
                             <span className="text-aiya-purple mt-0.5">3.</span>
