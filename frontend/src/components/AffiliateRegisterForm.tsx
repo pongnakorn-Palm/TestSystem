@@ -820,7 +820,7 @@ export default function AffiliateRegisterForm() {
 
           {/* ==================== STEP 1: Personal Information ==================== */}
           {currentStep === 1 && (
-            <>
+            <div className="animate-slide-in-left">
               {/* Personal Information - 2 Column Layout on Desktop */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 {/* ชื่อ-นามสกุล */}
@@ -957,12 +957,12 @@ export default function AffiliateRegisterForm() {
                   />
                 </svg>
               </button>
-            </>
+            </div>
           )}
 
           {/* ==================== STEP 2: Affiliate Code & Confirmation ==================== */}
           {currentStep === 2 && (
-            <>
+            <div className="animate-slide-in-right">
               {/* Affiliate Code - Prominent Display */}
               <div className="text-center">
                 <p className="text-white/70 text-sm mb-2">
@@ -1305,7 +1305,7 @@ export default function AffiliateRegisterForm() {
                   )}
                 </button>
               </div>
-            </>
+            </div>
           )}
 
           {/* Privacy Note */}
