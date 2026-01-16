@@ -821,7 +821,7 @@ export default function AffiliateRegisterForm() {
           {/* ==================== STEP 1: Personal Information ==================== */}
           {currentStep === 1 && (
             <div className="animate-slide-in-left">
-              {/* Personal Information - 2 Column Layout on Desktop */}
+              {/* Personal Information - Single Grid Container for Consistent Spacing */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 {/* ชื่อ-นามสกุล */}
                 <div>
@@ -896,51 +896,51 @@ export default function AffiliateRegisterForm() {
                     </p>
                   )}
                 </div>
-              </div>
 
-              {/* Phone - Full Width */}
-              <div>
-                <label className="label-modern">
-                  เบอร์โทรศัพท์ <span className="text-red-500">*</span>
-                </label>
-                <input
-                  ref={phoneRef}
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  onBlur={() => handleBlur("phone")}
-                  enterKeyHint="done"
-                  maxLength={10}
-                  className={`input-modern ${
-                    showError("phone") ? "ring-2 ring-red-400/50" : ""
-                  }`}
-                  placeholder="0812345678"
-                  inputMode="numeric"
-                />
-                {showError("phone") && (
-                  <p className="error-message text-red-300 text-xs mt-1.5 ml-1 flex items-center gap-1 animate-fade-in">
-                    <svg
-                      className="w-3.5 h-3.5"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    {errors.phone}
-                  </p>
-                )}
+                {/* Phone - Full Width on Desktop */}
+                <div className="lg:col-span-2">
+                  <label className="label-modern">
+                    เบอร์โทรศัพท์ <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    ref={phoneRef}
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    onBlur={() => handleBlur("phone")}
+                    enterKeyHint="done"
+                    maxLength={10}
+                    className={`input-modern ${
+                      showError("phone") ? "ring-2 ring-red-400/50" : ""
+                    }`}
+                    placeholder="08x-xxx-xxxx"
+                    inputMode="numeric"
+                  />
+                  {showError("phone") && (
+                    <p className="error-message text-red-300 text-xs mt-1.5 ml-1 flex items-center gap-1 animate-fade-in">
+                      <svg
+                        className="w-3.5 h-3.5"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      {errors.phone}
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Next Button */}
               <button
                 type="button"
                 onClick={handleNextStep}
-                className="btn-gradient mt-2 min-h-[48px] md:min-h-[56px] text-base md:text-lg group"
+                className="btn-gradient mt-5 min-h-[48px] md:min-h-[56px] text-base md:text-lg group"
               >
                 <span>ถัดไป</span>
                 <svg
