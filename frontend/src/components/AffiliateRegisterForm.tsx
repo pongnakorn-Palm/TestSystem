@@ -47,6 +47,7 @@ export default function AffiliateRegisterForm() {
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(
     null
   );
+  const [currentStep, setCurrentStep] = useState<1 | 2>(1);
 
   // Auto-fill form data from LINE profile (only if fields are empty)
   useEffect(() => {
@@ -140,6 +141,71 @@ export default function AffiliateRegisterForm() {
     );
 
     return isValid;
+  };
+
+  // Validate only Step 1 fields (Name, Email, Phone)
+  const validateStep1 = (): boolean => {
+    let isValid = true;
+
+    ["name", "email", "phone"].forEach((field) => {
+      if (!validateField(field, formData[field as keyof FormData])) {
+        isValid = false;
+      }
+    });
+
+    // Mark Step 1 fields as touched
+    setTouched((prev) => new Set([...prev, "name", "email", "phone"]));
+
+    return isValid;
+  };
+
+  // Generate affiliate code from name and phone
+  const generateAffiliateCode = (name: string, phone: string): string => {
+    // Extract first 3 letters of the name (uppercase)
+    // Check if name contains English letters
+    const englishLetters = name.match(/[A-Za-z]/g);
+    let prefix: string;
+
+    if (englishLetters && englishLetters.length >= 3) {
+      // Use first 3 English letters from the name
+      prefix = englishLetters.slice(0, 3).join("").toUpperCase();
+    } else {
+      // Default to "AIYA" if name is not English or has less than 3 letters
+      prefix = "AIYA";
+    }
+
+    // Get last 4 digits of phone number
+    const phoneDigits = phone.replace(/\D/g, "");
+    const suffix = phoneDigits.slice(-4);
+
+    return prefix + suffix;
+  };
+
+  // Handle Next button click (Step 1 -> Step 2)
+  const handleNextStep = async () => {
+    if (!validateStep1()) {
+      scrollToError();
+      return;
+    }
+
+    // Auto-generate affiliate code if empty
+    if (!formData.affiliateCode.trim()) {
+      const generatedCode = generateAffiliateCode(formData.name, formData.phone);
+      setFormData((prev) => ({ ...prev, affiliateCode: generatedCode }));
+
+      // Trigger code availability check
+      setCodeAvailability("checking");
+      setTimeout(() => {
+        checkCodeAvailability(generatedCode);
+      }, 100);
+    }
+
+    setCurrentStep(2);
+  };
+
+  // Handle Back button click (Step 2 -> Step 1)
+  const handleBackStep = () => {
+    setCurrentStep(1);
   };
 
   const checkCodeAvailability = async (code: string): Promise<boolean> => {
@@ -519,8 +585,70 @@ export default function AffiliateRegisterForm() {
           className="glass-card p-5 sm:p-6 md:p-8 lg:p-10 space-y-5 md:space-y-6"
           noValidate
         >
+          {/* Step Indicator */}
+          <div className="mb-6">
+            <div className="flex items-center justify-center gap-4">
+              {/* Step 1 */}
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ${
+                    currentStep >= 1
+                      ? "bg-gradient-to-br from-aiya-purple to-[#5C499D] text-white"
+                      : "bg-white/10 text-white/50"
+                  }`}
+                >
+                  {currentStep > 1 ? (
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  ) : (
+                    "1"
+                  )}
+                </div>
+                <span
+                  className={`text-sm font-medium transition-colors duration-300 ${
+                    currentStep === 1 ? "text-white" : "text-white/60"
+                  }`}
+                >
+                  ข้อมูลส่วนตัว
+                </span>
+              </div>
+
+              {/* Connector Line */}
+              <div
+                className={`w-12 h-0.5 transition-colors duration-300 ${
+                  currentStep >= 2 ? "bg-aiya-purple" : "bg-white/20"
+                }`}
+              ></div>
+
+              {/* Step 2 */}
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ${
+                    currentStep >= 2
+                      ? "bg-gradient-to-br from-aiya-purple to-[#5C499D] text-white"
+                      : "bg-white/10 text-white/50"
+                  }`}
+                >
+                  2
+                </div>
+                <span
+                  className={`text-sm font-medium transition-colors duration-300 ${
+                    currentStep === 2 ? "text-white" : "text-white/60"
+                  }`}
+                >
+                  สร้างรหัส
+                </span>
+              </div>
+            </div>
+          </div>
+
           <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white mb-3 md:mb-4">
-            กรอกข้อมูลการสมัคร
+            {currentStep === 1 ? "กรอกข้อมูลส่วนตัว" : "สร้างรหัส Affiliate"}
           </h2>
 
           {/* Global Error */}
@@ -541,155 +669,185 @@ export default function AffiliateRegisterForm() {
             </div>
           )}
 
-          {/* Personal Information - 2 Column Layout on Desktop */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {/* ชื่อ-นามสกุล */}
-            <div>
-              <label className="label-modern">
-                ชื่อ-นามสกุล <span className="text-red-500">*</span>
-              </label>
-              <input
-                ref={nameRef}
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                onBlur={() => handleBlur("name")}
-                onKeyDown={(e) => handleKeyDown(e, emailRef)}
-                enterKeyHint="next"
-                className={`input-modern ${
-                  showError("name") ? "ring-2 ring-red-400/50" : ""
-                }`}
-                placeholder="สมชาย ใจดี"
-              />
-              {showError("name") && (
-                <p className="error-message text-red-300 text-xs mt-1.5 ml-1 flex items-center gap-1 animate-fade-in">
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  {errors.name}
-                </p>
-              )}
-            </div>
+          {/* ==================== STEP 1: Personal Information ==================== */}
+          {currentStep === 1 && (
+            <>
+              {/* Personal Information - 2 Column Layout on Desktop */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                {/* ชื่อ-นามสกุล */}
+                <div>
+                  <label className="label-modern">
+                    ชื่อ-นามสกุล <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    ref={nameRef}
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    onBlur={() => handleBlur("name")}
+                    onKeyDown={(e) => handleKeyDown(e, emailRef)}
+                    enterKeyHint="next"
+                    className={`input-modern ${
+                      showError("name") ? "ring-2 ring-red-400/50" : ""
+                    }`}
+                    placeholder="สมชาย ใจดี"
+                  />
+                  {showError("name") && (
+                    <p className="error-message text-red-300 text-xs mt-1.5 ml-1 flex items-center gap-1 animate-fade-in">
+                      <svg
+                        className="w-3.5 h-3.5"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      {errors.name}
+                    </p>
+                  )}
+                </div>
 
-            {/* Email */}
-            <div>
-              <label className="label-modern">
-                อีเมล <span className="text-red-500">*</span>
-              </label>
-              <input
-                ref={emailRef}
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                onBlur={() => handleBlur("email")}
-                onKeyDown={(e) => handleKeyDown(e, phoneRef)}
-                enterKeyHint="next"
-                className={`input-modern ${
-                  showError("email") ? "ring-2 ring-red-400/50" : ""
-                }`}
-                placeholder="example@email.com"
-              />
-              {showError("email") && (
-                <p className="error-message text-red-300 text-xs mt-1.5 ml-1 flex items-center gap-1 animate-fade-in">
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  {errors.email}
-                </p>
-              )}
-            </div>
-          </div>
+                {/* Email */}
+                <div>
+                  <label className="label-modern">
+                    อีเมล <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    ref={emailRef}
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    onBlur={() => handleBlur("email")}
+                    onKeyDown={(e) => handleKeyDown(e, phoneRef)}
+                    enterKeyHint="next"
+                    className={`input-modern ${
+                      showError("email") ? "ring-2 ring-red-400/50" : ""
+                    }`}
+                    placeholder="example@email.com"
+                  />
+                  {showError("email") && (
+                    <p className="error-message text-red-300 text-xs mt-1.5 ml-1 flex items-center gap-1 animate-fade-in">
+                      <svg
+                        className="w-3.5 h-3.5"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      {errors.email}
+                    </p>
+                  )}
+                </div>
+              </div>
 
-          {/* Contact & Code - 2 Column Layout on Desktop */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {/* เบอร์โทรศัพท์ */}
-            <div>
-              <label className="label-modern">
-                เบอร์โทรศัพท์ <span className="text-red-500">*</span>
-              </label>
-              <input
-                ref={phoneRef}
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                onBlur={() => handleBlur("phone")}
-                onKeyDown={(e) => handleKeyDown(e, affiliateCodeRef)}
-                enterKeyHint="next"
-                maxLength={10}
-                className={`input-modern ${
-                  showError("phone") ? "ring-2 ring-red-400/50" : ""
-                }`}
-                placeholder="0812345678"
-                inputMode="numeric"
-              />
-              {showError("phone") && (
-                <p className="error-message text-red-300 text-xs mt-1.5 ml-1 flex items-center gap-1 animate-fade-in">
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  {errors.phone}
-                </p>
-              )}
-            </div>
-
-            {/* Affiliate Code */}
-            <div>
-              <label className="label-modern">
-                Affiliate Code <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
+              {/* Phone - Full Width */}
+              <div>
+                <label className="label-modern">
+                  เบอร์โทรศัพท์ <span className="text-red-500">*</span>
+                </label>
                 <input
-                  ref={affiliateCodeRef}
-                  type="text"
-                  name="affiliateCode"
-                  value={formData.affiliateCode}
-                  onChange={handleAffiliateCodeChange}
-                  onBlur={handleAffiliateCodeBlur}
+                  ref={phoneRef}
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  onBlur={() => handleBlur("phone")}
                   enterKeyHint="done"
-                  className={`input-modern font-mono tracking-wider text-base pr-10 ${
-                    showError("affiliateCode")
-                      ? "ring-2 ring-red-400/50"
-                      : codeAvailability === "available"
-                      ? "ring-2 ring-green-400/50"
-                      : codeAvailability === "taken"
-                      ? "ring-2 ring-red-400/50"
-                      : ""
+                  maxLength={10}
+                  className={`input-modern ${
+                    showError("phone") ? "ring-2 ring-red-400/50" : ""
                   }`}
-                  placeholder="AIYABOY"
+                  placeholder="0812345678"
+                  inputMode="numeric"
                 />
-                {/* Availability Indicator */}
-                {codeAvailability && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                {showError("phone") && (
+                  <p className="error-message text-red-300 text-xs mt-1.5 ml-1 flex items-center gap-1 animate-fade-in">
+                    <svg
+                      className="w-3.5 h-3.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    {errors.phone}
+                  </p>
+                )}
+              </div>
+
+              {/* Next Button */}
+              <button
+                type="button"
+                onClick={handleNextStep}
+                className="btn-gradient mt-2 min-h-[48px] md:min-h-[56px] text-base md:text-lg"
+              >
+                ถัดไป
+                <svg
+                  className="w-5 h-5 ml-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </button>
+            </>
+          )}
+
+          {/* ==================== STEP 2: Affiliate Code & Confirmation ==================== */}
+          {currentStep === 2 && (
+            <>
+              {/* Affiliate Code - Prominent Display */}
+              <div className="text-center">
+                <p className="text-white/70 text-sm mb-2">
+                  รหัส Affiliate ของคุณ (แก้ไขได้)
+                </p>
+                <div className="relative max-w-md mx-auto">
+                  <input
+                    ref={affiliateCodeRef}
+                    type="text"
+                    name="affiliateCode"
+                    value={formData.affiliateCode}
+                    onChange={handleAffiliateCodeChange}
+                    onBlur={handleAffiliateCodeBlur}
+                    enterKeyHint="done"
+                    className={`input-modern font-mono font-bold tracking-widest text-2xl md:text-3xl text-center py-4 px-12 transition-all duration-200 focus:shadow-lg focus:shadow-aiya-purple/20 ${
+                      showError("affiliateCode")
+                        ? "ring-2 ring-red-400/50"
+                        : codeAvailability === "available"
+                        ? "ring-2 ring-green-400/50"
+                        : codeAvailability === "taken"
+                        ? "ring-2 ring-red-400/50"
+                        : ""
+                    }`}
+                    placeholder="AIYABOY"
+                    style={{
+                      caretColor: '#a78bfa',
+                    }}
+                  />
+                  {/* Status/Edit Indicator - Always visible on right side */}
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                    {/* Loading State */}
                     {codeAvailability === "checking" && (
                       <svg
-                        className="animate-spin h-5 w-5 text-white/50"
+                        className="animate-spin h-6 w-6 text-white/50"
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
@@ -709,9 +867,10 @@ export default function AffiliateRegisterForm() {
                         ></path>
                       </svg>
                     )}
+                    {/* Success State */}
                     {codeAvailability === "available" && (
                       <svg
-                        className="w-5 h-5 text-green-400"
+                        className="w-6 h-6 text-green-400"
                         fill="currentColor"
                         viewBox="0 0 20 20"
                       >
@@ -722,9 +881,10 @@ export default function AffiliateRegisterForm() {
                         />
                       </svg>
                     )}
+                    {/* Error State */}
                     {codeAvailability === "taken" && (
                       <svg
-                        className="w-5 h-5 text-red-400"
+                        className="w-6 h-6 text-red-400"
                         fill="currentColor"
                         viewBox="0 0 20 20"
                       >
@@ -735,26 +895,172 @@ export default function AffiliateRegisterForm() {
                         />
                       </svg>
                     )}
+                    {/* Default State - Pencil Icon (Editable Indicator) */}
+                    {!codeAvailability && (
+                      <svg
+                        className="w-6 h-6 text-white/40"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                        />
+                      </svg>
+                    )}
                   </div>
+                </div>
+                <p className="text-xs text-white/60 mt-2 flex items-center justify-center gap-1">
+                  <svg
+                    className="w-3 h-3"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  ใช้ได้เฉพาะตัวอักษร A-Z และตัวเลข 0-9
+                </p>
+                {codeAvailability === "available" &&
+                  !showError("affiliateCode") && (
+                    <p className="text-green-300 text-sm mt-2 flex items-center justify-center gap-1 animate-fade-in">
+                      <svg
+                        className="w-4 h-4"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      รหัสนี้ว่าง สามารถใช้งานได้
+                    </p>
+                  )}
+                {codeAvailability === "taken" && (
+                  <p className="error-message text-red-300 text-sm mt-2 flex items-center justify-center gap-1 animate-fade-in">
+                    <svg
+                      className="w-4 h-4"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    รหัสนี้ถูกใช้งานแล้ว กรุณาเลือกรหัสอื่น
+                  </p>
+                )}
+                {showError("affiliateCode") && (
+                  <p className="error-message text-red-300 text-sm mt-2 flex items-center justify-center gap-1 animate-fade-in">
+                    <svg
+                      className="w-4 h-4"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    {errors.affiliateCode}
+                  </p>
                 )}
               </div>
-              <p className="text-xs text-white/60 mt-1.5 ml-1 flex items-center gap-1">
-                <svg
-                  className="w-3 h-3"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
+
+              {/* PDPA Consent Checkbox - AIYA Dark Theme */}
+              <div>
+                <label
+                  htmlFor="pdpa-checkbox"
+                  className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all duration-200 select-none ${
+                    showError("pdpaConsent")
+                      ? "border-red-400/50 bg-red-500/5"
+                      : "border-white/20 bg-white/5 hover:border-aiya-purple/50 hover:bg-white/10"
+                  }`}
                 >
-                  <path
-                    fillRule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                ใช้ได้เฉพาะตัวอักษร A-Z และตัวเลข 0-9
-              </p>
-              {codeAvailability === "available" &&
-                !showError("affiliateCode") && (
-                  <p className="text-green-300 text-xs mt-1.5 ml-1 flex items-center gap-1 animate-fade-in">
+                  <div className="relative shrink-0 mt-0.5">
+                    <input
+                      id="pdpa-checkbox"
+                      type="checkbox"
+                      checked={formData.pdpaConsent}
+                      onChange={(e) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          pdpaConsent: e.target.checked,
+                        }));
+                        if (errors.pdpaConsent) {
+                          setErrors((prev) => ({
+                            ...prev,
+                            pdpaConsent: undefined,
+                          }));
+                        }
+                        setSubmitError("");
+                      }}
+                      onBlur={() => handleBlur("pdpaConsent")}
+                      className="peer sr-only"
+                    />
+                    <div
+                      className={`w-5 h-5 rounded border transition-all duration-200 flex items-center justify-center ${
+                        formData.pdpaConsent
+                          ? "bg-gradient-to-br from-aiya-purple to-[#5C499D] border-aiya-purple"
+                          : showError("pdpaConsent")
+                          ? "bg-white/5 border-red-400"
+                          : "bg-white/5 border-white/30 peer-hover:border-aiya-purple/50"
+                      }`}
+                    >
+                      {formData.pdpaConsent && (
+                        <svg
+                          className="w-3.5 h-3.5 text-white"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                  <span className="text-sm md:text-base font-medium text-white/90 leading-relaxed">
+                    ข้าพเจ้ายอมรับ{" "}
+                    <a
+                      href="https://web.aiya.ai/privacy-policy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-blue-400 hover:text-blue-300 hover:underline transition-colors"
+                    >
+                      เงื่อนไขการใช้งาน
+                    </a>{" "}
+                    และ{" "}
+                    <a
+                      href="https://web.aiya.ai/privacy-policy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-blue-400 hover:text-blue-300 hover:underline transition-colors"
+                    >
+                      นโยบายความเป็นส่วนตัว
+                    </a>{" "}
+                    ของ AIYA <span className="text-red-400">*</span>
+                  </span>
+                </label>
+                {showError("pdpaConsent") && (
+                  <p className="error-message text-red-300 text-xs mt-2 ml-1 flex items-center gap-1 animate-fade-in">
                     <svg
                       className="w-3.5 h-3.5"
                       fill="currentColor"
@@ -762,181 +1068,76 @@ export default function AffiliateRegisterForm() {
                     >
                       <path
                         fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
                         clipRule="evenodd"
                       />
                     </svg>
-                    รหัสนี้ว่าง สามารถใช้งานได้
+                    {errors.pdpaConsent}
                   </p>
                 )}
-              {codeAvailability === "taken" && (
-                <p className="error-message text-red-300 text-xs mt-1.5 ml-1 flex items-center gap-1 animate-fade-in">
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  รหัสนี้ถูกใช้งานแล้ว กรุณาเลือกรหัสอื่น
-                </p>
-              )}
-              {showError("affiliateCode") && (
-                <p className="error-message text-red-300 text-xs mt-1.5 ml-1 flex items-center gap-1 animate-fade-in">
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  {errors.affiliateCode}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* PDPA Consent Checkbox - AIYA Dark Theme */}
-          <div>
-            <label
-              htmlFor="pdpa-checkbox"
-              className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all duration-200 select-none ${
-                showError("pdpaConsent")
-                  ? "border-red-400/50 bg-red-500/5"
-                  : "border-white/20 bg-white/5 hover:border-aiya-purple/50 hover:bg-white/10"
-              }`}
-            >
-              <div className="relative shrink-0 mt-0.5">
-                <input
-                  id="pdpa-checkbox"
-                  type="checkbox"
-                  checked={formData.pdpaConsent}
-                  onChange={(e) => {
-                    setFormData((prev) => ({
-                      ...prev,
-                      pdpaConsent: e.target.checked,
-                    }));
-                    if (errors.pdpaConsent) {
-                      setErrors((prev) => ({
-                        ...prev,
-                        pdpaConsent: undefined,
-                      }));
-                    }
-                    setSubmitError("");
-                  }}
-                  onBlur={() => handleBlur("pdpaConsent")}
-                  className="peer sr-only"
-                />
-                <div
-                  className={`w-5 h-5 rounded border transition-all duration-200 flex items-center justify-center ${
-                    formData.pdpaConsent
-                      ? "bg-gradient-to-br from-aiya-purple to-[#5C499D] border-aiya-purple"
-                      : showError("pdpaConsent")
-                      ? "bg-white/5 border-red-400"
-                      : "bg-white/5 border-white/30 peer-hover:border-aiya-purple/50"
-                  }`}
-                >
-                  {formData.pdpaConsent && (
-                    <svg
-                      className="w-3.5 h-3.5 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  )}
-                </div>
               </div>
-              <span className="text-sm md:text-base font-medium text-white/90 leading-relaxed">
-                ข้าพเจ้ายอมรับ{" "}
-                <a
-                  href="https://web.aiya.ai/privacy-policy"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="text-blue-400 hover:text-blue-300 hover:underline transition-colors"
-                >
-                  เงื่อนไขการใช้งาน
-                </a>{" "}
-                และ{" "}
-                <a
-                  href="https://web.aiya.ai/privacy-policy"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="text-blue-400 hover:text-blue-300 hover:underline transition-colors"
-                >
-                  นโยบายความเป็นส่วนตัว
-                </a>{" "}
-                ของ AIYA <span className="text-red-400">*</span>
-              </span>
-            </label>
-            {showError("pdpaConsent") && (
-              <p className="error-message text-red-300 text-xs mt-2 ml-1 flex items-center gap-1 animate-fade-in">
-                <svg
-                  className="w-3.5 h-3.5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                {errors.pdpaConsent}
-              </p>
-            )}
-          </div>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="btn-gradient disabled:opacity-60 disabled:cursor-not-allowed mt-2 min-h-[48px] md:min-h-[56px] text-base md:text-lg"
-          >
-            {isLoading ? (
-              <>
-                <svg
-                  className="animate-spin h-5 w-5 md:h-6 md:w-6 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
+              {/* Action Buttons - Back and Submit */}
+              <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                {/* Back Button */}
+                <button
+                  type="button"
+                  onClick={handleBackStep}
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 min-h-[48px] md:min-h-[56px] rounded-xl border border-white/20 bg-white/5 text-white font-medium hover:bg-white/10 hover:border-white/30 transition-all duration-200 text-base md:text-lg"
                 >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
                     stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                กำลังดำเนินการ...
-              </>
-            ) : (
-              "สมัครพันธมิตรรับสิทธิ์ทันที"
-            )}
-          </button>
+                    strokeWidth="2"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                  ย้อนกลับ
+                </button>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={isLoading || codeAvailability === "taken" || !formData.pdpaConsent}
+                  className="flex-1 btn-gradient disabled:opacity-60 disabled:cursor-not-allowed min-h-[48px] md:min-h-[56px] text-base md:text-lg"
+                >
+                  {isLoading ? (
+                    <>
+                      <svg
+                        className="animate-spin h-5 w-5 md:h-6 md:w-6 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      กำลังดำเนินการ...
+                    </>
+                  ) : (
+                    "ยืนยันการสมัคร"
+                  )}
+                </button>
+              </div>
+            </>
+          )}
 
           {/* Privacy Note */}
           <p className="text-xs md:text-sm text-white/60 text-center mt-3 md:mt-4 flex items-center justify-center gap-1.5">
