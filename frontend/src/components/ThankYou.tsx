@@ -8,7 +8,7 @@ export default function ThankYou() {
     const [copied, setCopied] = useState(false);
 
     // Protected Route: Redirect if accessed directly without registration data
-    const hasRegistered = !!location.state?.name;
+    const hasRegistered = !!location.state?.affiliateCode;
 
     useEffect(() => {
         if (!hasRegistered) {
@@ -22,7 +22,6 @@ export default function ThankYou() {
     }, []);
 
     // Get data from previous state
-    const name = location.state?.name || '';
     const affiliateCode = location.state?.affiliateCode || '';
     const emailSent = location.state?.emailSent ?? true;
     const mainSystemSuccess = location.state?.mainSystemSuccess ?? true;
