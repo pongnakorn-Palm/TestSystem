@@ -977,6 +977,11 @@ export default function AffiliateRegisterForm() {
                     onChange={handleAffiliateCodeChange}
                     onBlur={handleAffiliateCodeBlur}
                     enterKeyHint="done"
+                    inputMode="text"
+                    lang="en"
+                    spellCheck="false"
+                    autoCorrect="off"
+                    autoCapitalize="characters"
                     className={`input-modern font-mono font-bold tracking-widest text-2xl md:text-3xl text-center py-4 px-12 transition-all duration-200 focus:shadow-lg focus:shadow-aiya-purple/20 ${
                       showError("affiliateCode")
                         ? "ring-2 ring-red-400/50"
