@@ -241,6 +241,13 @@ export default function AffiliateRegisterForm() {
         newTouched.delete("affiliateCode");
         return newTouched;
       });
+    } else {
+      // User kept existing code - validate it immediately
+      setCodeAvailability("checking");
+      checkCodeAvailability(formData.affiliateCode).catch((error) => {
+        console.error("Unhandled error in checkCodeAvailability:", error);
+        setCodeAvailability(null);
+      });
     }
 
     setCurrentStep(2);
