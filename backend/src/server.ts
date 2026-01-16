@@ -79,7 +79,7 @@ const affiliateSchema = t.Object({
     phone: t.String({ minLength: 9, maxLength: 20 }),
     affiliateCode: t.String({
         minLength: 3,  // Match frontend validation (requires at least 3 characters)
-        maxLength: 50,
+        maxLength: 10, // Limited to 10 characters
         pattern: "^[A-Z0-9]+$"  // Only uppercase A-Z and 0-9
     }),
 });
@@ -406,7 +406,7 @@ export const app = new Elysia()
                 tel: t.String({ minLength: 9, maxLength: 20 }),
                 generatedCode: t.String({
                     minLength: 3,  // Match frontend validation (requires at least 3 characters)
-                    maxLength: 50,
+                    maxLength: 10, // Limited to 10 characters
                     pattern: "^[A-Z0-9]+$",
                 }),
             }),

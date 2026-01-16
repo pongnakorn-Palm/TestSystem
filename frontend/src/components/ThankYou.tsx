@@ -141,7 +141,7 @@ export default function ThankYou() {
 
                     <div className="text-center">
                         <p className="text-xs text-gray-400 uppercase tracking-widest font-bold mb-3">รหัสพันธมิตรของคุณ</p>
-                        <p className="text-4xl font-bold text-white font-mono tracking-wider break-all text-center pr-12 mb-2">{affiliateCode}</p>
+                        <p className="text-4xl font-bold text-white font-mono tracking-wider break-all text-center mb-2">{affiliateCode}</p>
                         <p className="text-sm text-gray-400">แชร์รหัสนี้เพื่อรับค่าคอมมิชชั่น</p>
                     </div>
                 </div>

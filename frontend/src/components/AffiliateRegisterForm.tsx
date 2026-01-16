@@ -44,7 +44,13 @@ export default function AffiliateRegisterForm() {
   const [codeAvailability, setCodeAvailability] = useState<
     "checking" | "available" | "taken" | null
   >(null);
+  const [emailAvailability, setEmailAvailability] = useState<
+    "checking" | "available" | "taken" | null
+  >(null);
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(
+    null
+  );
+  const [emailDebounceTimer, setEmailDebounceTimer] = useState<NodeJS.Timeout | null>(
     null
   );
   const [currentStep, setCurrentStep] = useState<1 | 2>(1);
@@ -65,14 +71,17 @@ export default function AffiliateRegisterForm() {
     }
   }, [isLoggedIn, profile]);
 
-  // Cleanup debounce timer on unmount to prevent memory leaks
+  // Cleanup debounce timers on unmount to prevent memory leaks
   useEffect(() => {
     return () => {
       if (debounceTimer) {
         clearTimeout(debounceTimer);
       }
+      if (emailDebounceTimer) {
+        clearTimeout(emailDebounceTimer);
+      }
     };
-  }, [debounceTimer]);
+  }, [debounceTimer, emailDebounceTimer]);
 
   // Cleanup abort controller and long loading timer on unmount
   useEffect(() => {
@@ -106,11 +115,46 @@ export default function AffiliateRegisterForm() {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
     setSubmitError("");
+
+    // Check email availability with debounce
+    if (name === "email") {
+      setEmailAvailability(null);
+
+      // Clear previous timer
+      if (emailDebounceTimer) {
+        clearTimeout(emailDebounceTimer);
+      }
+
+      // Set email availability to checking if valid email format
+      if (filteredValue && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(filteredValue)) {
+        setEmailAvailability("checking");
+
+        // Debounce the API call
+        const timer = setTimeout(() => {
+          checkEmailAvailability(filteredValue).catch((error) => {
+            console.error("Unhandled error in checkEmailAvailability:", error);
+            setEmailAvailability(null);
+          });
+        }, 500);
+
+        setEmailDebounceTimer(timer);
+      }
+    }
   };
 
   const handleBlur = (fieldName: string) => {
     setTouched((prev) => new Set(prev).add(fieldName));
     validateField(fieldName, formData[fieldName as keyof FormData]);
+
+    // Check email availability on blur
+    if (fieldName === "email" && formData.email) {
+      if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+        setEmailAvailability("checking");
+        checkEmailAvailability(formData.email).catch(() => {
+          setEmailAvailability(null);
+        });
+      }
+    }
   };
 
   const validateField = (fieldName: string, value: any) => {
@@ -143,6 +187,10 @@ export default function AffiliateRegisterForm() {
           error = "กรุณากรอก Affiliate Code";
         } else if (!/^[A-Z0-9]+$/.test(value)) {
           error = "ใช้ได้เฉพาะตัวอักษร A-Z และตัวเลข 0-9";
+        } else if (value.length < 3) {
+          error = "รหัสต้องมีอย่างน้อย 3 ตัวอักษร";
+        } else if (value.length > 10) {
+          error = "รหัสต้องไม่เกิน 10 ตัวอักษร";
         }
         break;
       case "pdpaConsent":
@@ -219,6 +267,19 @@ export default function AffiliateRegisterForm() {
     if (!validateStep1()) {
       scrollToError();
       return;
+    }
+
+    // Check if email is already taken
+    if (formData.email) {
+      const emailTaken = await checkEmailAvailability(formData.email);
+      if (emailTaken) {
+        setErrors((prev) => ({
+          ...prev,
+          email: "อีเมลนี้ถูกลงทะเบียนแล้ว",
+        }));
+        scrollToError();
+        return;
+      }
     }
 
     // Auto-generate affiliate code if empty
@@ -325,6 +386,30 @@ export default function AffiliateRegisterForm() {
       }
       setIsLongLoading(false);
 
+      return false;
+    }
+  };
+
+  const checkEmailAvailability = async (email: string): Promise<boolean> => {
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailAvailability(null);
+      return false;
+    }
+
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      const response = await fetch(
+        `${apiUrl}/api/check-affiliate?email=${encodeURIComponent(email)}`
+      );
+      const data = await response.json();
+
+      const isTaken = data.exists;
+      setEmailAvailability(isTaken ? "taken" : "available");
+
+      return isTaken;
+    } catch (error: any) {
+      console.error("Error checking email availability:", error);
+      setEmailAvailability(null);
       return false;
     }
   };
@@ -839,20 +924,95 @@ export default function AffiliateRegisterForm() {
                   <label className="label-modern">
                     อีเมล <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    ref={emailRef}
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    onBlur={() => handleBlur("email")}
-                    onKeyDown={(e) => handleKeyDown(e, phoneRef)}
-                    enterKeyHint="next"
-                    className={`input-modern ${
-                      showError("email") ? "ring-2 ring-red-400/50" : ""
-                    }`}
-                    placeholder="example@email.com"
-                  />
+                  <div className="relative">
+                    <input
+                      ref={emailRef}
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      onBlur={() => handleBlur("email")}
+                      onKeyDown={(e) => handleKeyDown(e, phoneRef)}
+                      enterKeyHint="next"
+                      className={`input-modern ${
+                        showError("email") || emailAvailability === "taken"
+                          ? "ring-2 ring-red-400/50"
+                          : emailAvailability === "available"
+                          ? "ring-2 ring-green-400/50"
+                          : ""
+                      }`}
+                      placeholder="example@email.com"
+                    />
+                    {/* Email Status Indicator */}
+                    {emailAvailability && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                        {emailAvailability === "checking" && (
+                          <svg
+                            className="animate-spin h-5 w-5 text-white/50"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                          </svg>
+                        )}
+                        {emailAvailability === "available" && (
+                          <svg
+                            className="w-5 h-5 text-green-400"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        )}
+                        {emailAvailability === "taken" && (
+                          <svg
+                            className="w-5 h-5 text-red-400"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {emailAvailability === "taken" && !showError("email") && (
+                    <p className="error-message text-red-300 text-xs mt-1.5 ml-1 flex items-center gap-1 animate-fade-in">
+                      <svg
+                        className="w-3.5 h-3.5"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      อีเมลนี้ถูกลงทะเบียนแล้ว
+                    </p>
+                  )}
                   {showError("email") && (
                     <p className="error-message text-red-300 text-xs mt-1.5 ml-1 flex items-center gap-1 animate-fade-in">
                       <svg
@@ -951,7 +1111,7 @@ export default function AffiliateRegisterForm() {
                     onChange={handleAffiliateCodeChange}
                     onBlur={handleAffiliateCodeBlur}
                     enterKeyHint="done"
-                    maxLength={20}
+                    maxLength={10}
                     inputMode="text"
                     lang="en"
                     spellCheck="false"
