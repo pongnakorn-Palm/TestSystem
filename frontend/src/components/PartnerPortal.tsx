@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLiff } from "../contexts/LiffContext";
+import DashboardSkeleton from "./DashboardSkeleton";
 
 interface DashboardData {
   affiliate: {
@@ -18,13 +19,15 @@ interface DashboardData {
 }
 
 export default function PartnerPortal() {
-  const { isLoggedIn, profile, login, isReady } = useLiff();
+  const { isLoggedIn, profile, login, isReady, liffObject } = useLiff();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(
     null
   );
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   // Fetch dashboard data when logged in
   useEffect(() => {
@@ -47,6 +50,8 @@ export default function PartnerPortal() {
 
         if (data.success) {
           setDashboardData(data.data);
+          setLastUpdated(new Date());
+          setError(null);
         } else {
           throw new Error(data.message);
         }
@@ -65,11 +70,85 @@ export default function PartnerPortal() {
     }
   }, [isLoggedIn, profile?.userId, isReady]);
 
+  // Refresh dashboard data
+  const refreshStats = async () => {
+    if (!isLoggedIn || !profile?.userId || isRefreshing) return;
+
+    setIsRefreshing(true);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      const response = await fetch(
+        `${apiUrl}/api/affiliate/dashboard/${profile.userId}`
+      );
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to refresh data");
+      }
+
+      if (data.success) {
+        setDashboardData(data.data);
+        setLastUpdated(new Date());
+        setError(null);
+      }
+    } catch (err: any) {
+      console.error("Refresh error:", err);
+      setError("ไม่สามารถอัปเดตข้อมูลได้ กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // Share to LINE
+  const shareToLine = async () => {
+    if (!liffObject || !dashboardData) return;
+
+    try {
+      const referralLink = `https://aiya-bootcamp.vercel.app/tickets?referral=${dashboardData.affiliate.affiliateCode}`;
+
+      const result = await liffObject.shareTargetPicker([
+        {
+          type: "text",
+          text: `🎉 มาร่วม AI EMPIRE Bootcamp กับเราสิ!\n\n✨ เรียนรู้ AI ให้เป็นมืออาชีพ\n💰 รับส่วนลดพิเศษเมื่อใช้รหัสของฉัน\n\n🔑 รหัส: ${dashboardData.affiliate.affiliateCode}\n🔗 ลิงก์: ${referralLink}\n\n#AIBootcamp #AIYA #AIEmpire`,
+        },
+      ]);
+
+      if (result) {
+        // Share successful
+        console.log("Shared successfully");
+      }
+    } catch (error) {
+      console.error("Share error:", error);
+      // Fallback to copy link
+      copyToClipboard(
+        `https://aiya-bootcamp.vercel.app/tickets?referral=${dashboardData.affiliate.affiliateCode}`
+      );
+    }
+  };
+
   // Copy to clipboard function
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  // Format last updated time
+  const formatLastUpdated = () => {
+    if (!lastUpdated) return "";
+
+    const now = new Date();
+    const diff = Math.floor((now.getTime() - lastUpdated.getTime()) / 1000);
+
+    if (diff < 60) return "เมื่อสักครู่";
+    if (diff < 3600) return `${Math.floor(diff / 60)} นาทีที่แล้ว`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} ชั่วโมงที่แล้ว`;
+    return lastUpdated.toLocaleDateString("th-TH", {
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -162,16 +241,9 @@ export default function PartnerPortal() {
     );
   }
 
-  // Show loading state
+  // Show loading state with skeleton
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#020c17] via-[#0a1628] to-[#020c17]">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-aiya-purple mb-4"></div>
-          <p className="text-white/70 text-sm">กำลังโหลดข้อมูล...</p>
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   // Format commission (stored in cents, convert to baht)
@@ -190,12 +262,43 @@ export default function PartnerPortal() {
   return (
     <div className="min-h-screen px-4 py-6 md:px-6 lg:px-8 bg-gradient-to-br from-[#020c17] via-[#0a1628] to-[#020c17]">
       <div className="w-full max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-            สถิติของฉัน 📊
-          </h1>
-          <p className="text-white/60">ยินดีต้อนรับกลับมา 👋</p>
+        {/* Header with Refresh Button */}
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+              สถิติของฉัน 📊
+            </h1>
+            <div className="flex items-center gap-2">
+              <p className="text-white/60">ยินดีต้อนรับกลับมา 👋</p>
+              {lastUpdated && (
+                <span className="text-white/40 text-xs">
+                  • อัปเดต{formatLastUpdated()}
+                </span>
+              )}
+            </div>
+          </div>
+          <button
+            onClick={refreshStats}
+            disabled={isRefreshing}
+            className={`p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-all duration-200 ${
+              isRefreshing ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+            title="รีเฟรชข้อมูล"
+          >
+            <svg
+              className={`w-5 h-5 ${isRefreshing ? "animate-spin" : ""}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+          </button>
         </div>
 
         {/* Profile Card */}
@@ -344,7 +447,7 @@ export default function PartnerPortal() {
             <h3 className="text-lg font-bold text-white mb-3">
               🔗 ลิงก์แนะนำของคุณ
             </h3>
-            <div className="flex gap-2">
+            <div className="flex gap-2 mb-3">
               <input
                 type="text"
                 value={referralLink}
@@ -354,6 +457,7 @@ export default function PartnerPortal() {
               <button
                 onClick={() => copyToClipboard(referralLink)}
                 className="px-4 py-3 bg-aiya-purple hover:bg-aiya-purple/80 text-white rounded-lg transition-colors duration-200"
+                title="คัดลอกลิงก์"
               >
                 {copied ? (
                   <svg
@@ -384,7 +488,21 @@ export default function PartnerPortal() {
                 )}
               </button>
             </div>
-            <p className="text-white/50 text-xs mt-2">
+
+            {/* Share to LINE Button */}
+            {liffObject && (
+              <button
+                onClick={shareToLine}
+                className="w-full flex items-center justify-center gap-2 bg-[#06C755] hover:bg-[#05b34b] text-white font-medium px-4 py-3 rounded-lg transition-colors duration-200"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
+                </svg>
+                แชร์ไปยัง LINE
+              </button>
+            )}
+
+            <p className="text-white/50 text-xs mt-3">
               แชร์ลิงก์นี้เพื่อรับค่าคอมมิชชั่น
             </p>
           </div>
