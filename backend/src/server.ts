@@ -672,21 +672,29 @@ export const app = new Elysia()
             }
 
             // Step 2: Query referral history from main system DB
-            const referrals = await mainSystemSql`
-                SELECT
-                    id,
-                    first_name,
-                    last_name,
-                    email,
-                    package_type,
-                    commission_amount,
-                    commission_status,
-                    created_at
-                FROM bootcamp_registrations
-                WHERE referral_code = ${localAffiliate.affiliate_code}
-                ORDER BY created_at DESC
-                LIMIT 100
-            `;
+            let referrals = [];
+
+            try {
+                referrals = await mainSystemSql`
+                    SELECT
+                        id,
+                        first_name,
+                        last_name,
+                        email,
+                        package_type,
+                        commission_amount,
+                        commission_status,
+                        created_at
+                    FROM bootcamp_registrations
+                    WHERE referral_code = ${localAffiliate.affiliate_code}
+                    ORDER BY created_at DESC
+                    LIMIT 100
+                `;
+            } catch (dbError: any) {
+                // If table doesn't exist or query fails, return empty array
+                console.warn("Database query warning (likely table doesn't exist yet):", dbError.message);
+                referrals = [];
+            }
 
             return {
                 success: true,
@@ -710,6 +718,7 @@ export const app = new Elysia()
             return {
                 success: false,
                 message: "Failed to fetch referral history",
+                error: process.env.NODE_ENV === 'development' ? error.message : undefined,
             };
         }
     });
