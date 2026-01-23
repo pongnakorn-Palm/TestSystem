@@ -31,6 +31,7 @@ export default function PartnerPortal() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [isSharing, setIsSharing] = useState(false);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'history' | 'profile'>('dashboard');
 
   // Fetch dashboard data when logged in
   useEffect(() => {
@@ -178,7 +179,7 @@ export default function PartnerPortal() {
   // Show loading spinner while LIFF is initializing
   if (!isReady) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0f172a] via-[#171536] to-[#1e1b4b]">
+      <div className="min-h-screen flex items-center justify-center bg-[#020c17]">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary mb-4"></div>
           <p className="text-white/70 text-sm">กำลังโหลด...</p>
@@ -190,7 +191,7 @@ export default function PartnerPortal() {
   // Show login prompt if not logged in
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0f172a] via-[#171536] to-[#1e1b4b] px-4">
+      <div className="min-h-screen flex items-center justify-center bg-[#020c17] px-4">
         <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl p-8 max-w-md w-full text-center">
           <div className="mb-6">
             <svg
@@ -234,7 +235,7 @@ export default function PartnerPortal() {
   // Show error state
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0f172a] via-[#171536] to-[#1e1b4b] px-4">
+      <div className="min-h-screen flex items-center justify-center bg-[#020c17] px-4">
         <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl p-8 max-w-md w-full text-center">
           <div className="mb-6">
             <svg
@@ -274,13 +275,30 @@ export default function PartnerPortal() {
     ? dashboardData.stats.totalCommission - dashboardData.stats.pendingCommission
     : 0;
 
+  // Mock data for development/testing (comment out when using real data)
+  const useMockData = true;
+  const mockStats = useMockData && dashboardData ? {
+    ...dashboardData,
+    stats: {
+      ...dashboardData.stats,
+      totalCommission: 1250000, // ฿12,500.00
+      pendingCommission: 450000, // ฿4,500.00
+      approvedCommission: 800000, // ฿8,000.00
+    }
+  } : dashboardData;
+
+  const displayData = mockStats || dashboardData;
+  const mockPaidCommission = displayData
+    ? displayData.stats.totalCommission - displayData.stats.pendingCommission
+    : 0;
+
   return (
     <>
       <SEOHead
-        title={`${dashboardData?.affiliate.name || "สถิติของฉัน"} - AIYA Affiliate`}
-        description={`ดูสถิติและค่าคอมมิชชั่นของคุณ | จำนวนผู้สมัคร: ${dashboardData?.stats.totalRegistrations || 0} คน | รายได้: ${dashboardData ? formatCommission(dashboardData.stats.totalCommission) : 0} บาท`}
+        title={`${displayData?.affiliate.name || "สถิติของฉัน"} - AIYA Affiliate`}
+        description={`ดูสถิติและค่าคอมมิชชั่นของคุณ | จำนวนผู้สมัคร: ${displayData?.stats.totalRegistrations || 0} คน | รายได้: ${displayData ? formatCommission(displayData.stats.totalCommission) : 0} บาท`}
       />
-      <div className="relative flex min-h-screen w-full flex-col bg-gradient-to-b from-[#0f172a] via-[#171536] to-[#1e1b4b] text-white overflow-x-hidden pb-24 font-display">
+      <div className="relative flex min-h-screen w-full flex-col bg-[#020c17] text-white overflow-x-hidden pb-24 font-display">
 
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-14 pb-6">
@@ -297,10 +315,10 @@ export default function PartnerPortal() {
                   {profile?.displayName?.charAt(0)}
                 </div>
               )}
-              <div className="absolute bottom-0 right-0 size-3.5 rounded-full bg-green-500 border-2 border-[#0f172a]"></div>
+              <div className="absolute bottom-0 right-0 size-3.5 rounded-full bg-green-500 border-2 border-[#020c17]"></div>
             </div>
             <div>
-              <p className="text-white/60 text-sm font-medium leading-tight mb-0.5">Welcome back,</p>
+              <p className="text-white/60 text-sm font-medium leading-tight mb-0.5">ยินดีต้อนรับ,</p>
               <p className="text-white text-xl font-bold leading-tight">
                 {profile?.displayName || "Partner"}
               </p>
@@ -317,134 +335,296 @@ export default function PartnerPortal() {
           </button>
         </div>
 
-        {/* Hero Card - Total Commission */}
-        {dashboardData && (
-          <div className="px-5 mt-2 mb-2">
-            <div className="relative w-full overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-[0_12px_40px_rgba(245,158,11,0.25)]">
-              <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
-              <div className="relative p-7 flex flex-col gap-2">
-                <div className="flex justify-between items-start">
-                  <p className="text-white/90 text-base font-medium tracking-wide">Total Commission</p>
-                  <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10">
-                    <span className="material-symbols-outlined text-white text-sm">trending_up</span>
-                    <span className="text-white text-xs font-bold">Active</span>
+        {/* Tab Content */}
+        {activeTab === 'dashboard' && displayData && (
+          <>
+            {/* Hero Card - Total Commission */}
+            <div className="px-5 mt-2 mb-2">
+              <div className="relative w-full overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-[0_12px_40px_rgba(245,158,11,0.25)]">
+                <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
+                <div className="relative p-7 flex flex-col gap-2">
+                  <div className="flex justify-between items-start">
+                    <p className="text-white/90 text-base font-medium tracking-wide">รายได้สะสม</p>
+                    <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10">
+                      <span className="material-symbols-outlined text-white text-sm">trending_up</span>
+                      <span className="text-white text-xs font-bold">ใช้งานอยู่</span>
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <h1 className="text-white text-[2.75rem] font-extrabold tracking-tight leading-none">
+                      ฿ {formatCommission(displayData.stats.totalCommission)}
+                    </h1>
+                    <p className="text-white/80 text-sm font-medium mt-2">
+                      อัปเดตเมื่อ {lastUpdated ? 'เมื่อสักครู่' : 'เร็วๆ นี้'}
+                    </p>
+                  </div>
+                  <div className="mt-8 flex items-center justify-between">
+                    <div className="h-1.5 w-full bg-black/10 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-white/90 rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min((displayData.stats.totalCommission / 2000000) * 100, 100)}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-xs font-bold text-white ml-4 whitespace-nowrap">เป้าหมาย: ฿ 20k</span>
                   </div>
                 </div>
-                <div className="mt-3">
-                  <h1 className="text-white text-[2.75rem] font-extrabold tracking-tight leading-none">
-                    ฿ {formatCommission(dashboardData.stats.totalCommission)}
-                  </h1>
-                  <p className="text-white/80 text-sm font-medium mt-2">
-                    Updated {lastUpdated ? 'just now' : 'recently'}
+              </div>
+            </div>
+
+            {/* Stats Cards - Pending & Paid */}
+            <div className="flex flex-wrap gap-5 p-5">
+              <div className="flex min-w-[140px] flex-1 flex-col gap-4 rounded-2xl p-6 bg-[#1e293b]/60 backdrop-blur-md border border-white/5 shadow-sm">
+                <div className="size-11 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
+                  <span className="material-symbols-outlined">pending</span>
+                </div>
+                <div>
+                  <p className="text-slate-400 text-sm font-medium leading-normal mb-1">รอตรวจสอบ</p>
+                  <p className="text-white tracking-tight text-2xl font-bold leading-tight">
+                    ฿ {formatCommission(displayData.stats.pendingCommission)}
                   </p>
                 </div>
-                <div className="mt-8 flex items-center justify-between">
-                  <div className="h-1.5 w-full bg-black/10 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-white/90 rounded-full transition-all duration-500"
-                      style={{ width: `${Math.min((dashboardData.stats.totalCommission / 2000000) * 100, 100)}%` }}
-                    ></div>
+              </div>
+              <div className="flex min-w-[140px] flex-1 flex-col gap-4 rounded-2xl p-6 bg-[#1e293b]/60 backdrop-blur-md border border-white/5 shadow-sm">
+                <div className="size-11 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                  <span className="material-symbols-outlined">check_circle</span>
+                </div>
+                <div>
+                  <p className="text-slate-400 text-sm font-medium leading-normal mb-1">จ่ายแล้ว</p>
+                  <p className="text-white tracking-tight text-2xl font-bold leading-tight">
+                    ฿ {formatCommission(mockPaidCommission)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Referral Code Section */}
+            <div className="px-5 pb-6">
+              <label className="text-sm text-slate-400 font-medium ml-1 mb-3 block">รหัสแนะนำของคุณ</label>
+              <div className="flex items-center justify-between bg-[#1e293b] rounded-2xl border border-white/10 p-2 pl-6 shadow-sm">
+                <span className="text-primary font-bold text-xl tracking-widest font-mono">
+                  {displayData.affiliate.affiliateCode}
+                </span>
+                <button
+                  onClick={() => copyToClipboard(displayData.affiliate.affiliateCode)}
+                  className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
+                >
+                  <span className="material-symbols-outlined text-xl">
+                    {copied ? 'check' : 'content_copy'}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-4 px-5 pb-8 flex-grow justify-end">
+              <button
+                onClick={shareToLine}
+                disabled={isSharing}
+                className={`relative w-full cursor-pointer overflow-hidden rounded-full h-14 bg-line-green hover:bg-[#05b34c] transition-colors text-white shadow-lg shadow-green-900/30 group ${
+                  isSharing ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                <div className="flex items-center justify-center gap-3 px-5 h-full w-full">
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
+                  </svg>
+                  <span className="text-lg font-bold tracking-wide">
+                    {isSharing ? 'กำลังแชร์...' : 'แชร์บอกเพื่อน'}
+                  </span>
+                </div>
+              </button>
+              <button
+                onClick={copyReferralLink}
+                className="w-full cursor-pointer items-center justify-center overflow-hidden rounded-full h-14 border border-white/20 bg-white/5 hover:bg-white/10 text-white transition-all"
+              >
+                <div className="flex items-center justify-center gap-3 px-5">
+                  <span className="material-symbols-outlined text-2xl">
+                    {copiedLink ? 'check' : 'link'}
+                  </span>
+                  <span className="text-lg font-semibold">
+                    {copiedLink ? 'คัดลอกแล้ว!' : 'คัดลอกลิงก์'}
+                  </span>
+                </div>
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* History Tab */}
+        {activeTab === 'history' && (
+          <div className="px-5 mt-4">
+            <h2 className="text-2xl font-bold text-white mb-6">ประวัติการทำรายการ</h2>
+            <div className="space-y-4">
+              {/* Sample transaction history - replace with real data later */}
+              {[
+                { date: '14 ม.ค. 69', name: 'คุณ Somchai', amount: 3000, status: 'รอตรวจสอบ', statusColor: 'text-blue-400' },
+                { date: '12 ม.ค. 69', name: 'คุณ Pranee', amount: 2500, status: 'จ่ายแล้ว', statusColor: 'text-emerald-400' },
+                { date: '10 ม.ค. 69', name: 'คุณ Manit', amount: 3500, status: 'จ่ายแล้ว', statusColor: 'text-emerald-400' },
+                { date: '08 ม.ค. 69', name: 'คุณ Suda', amount: 2000, status: 'จ่ายแล้ว', statusColor: 'text-emerald-400' },
+              ].map((transaction, index) => (
+                <div
+                  key={index}
+                  className="bg-[#1e293b]/60 backdrop-blur-md border border-white/5 rounded-2xl p-5"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <p className="text-white font-semibold text-base">{transaction.name}</p>
+                      <p className="text-slate-400 text-sm">{transaction.date}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-white font-bold text-lg">+฿ {transaction.amount.toLocaleString()}</p>
+                      <p className={`text-sm font-medium ${transaction.statusColor}`}>{transaction.status}</p>
+                    </div>
                   </div>
-                  <span className="text-xs font-bold text-white ml-4 whitespace-nowrap">Goal: ฿ 20k</span>
+                </div>
+              ))}
+
+              {/* Empty state */}
+              {displayData?.stats.totalRegistrations === 0 && (
+                <div className="text-center py-12">
+                  <span className="material-symbols-outlined text-6xl text-slate-600 mb-4 block">receipt_long</span>
+                  <p className="text-slate-400">ยังไม่มีประวัติการทำรายการ</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Profile Tab */}
+        {activeTab === 'profile' && displayData && (
+          <div className="px-5 mt-4">
+            <h2 className="text-2xl font-bold text-white mb-6">ข้อมูลบัญชี</h2>
+
+            {/* User Info Section */}
+            <div className="bg-[#1e293b]/60 backdrop-blur-md border border-white/5 rounded-2xl p-6 mb-6">
+              <h3 className="text-lg font-semibold text-white mb-4">ข้อมูลผู้ใช้</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm text-slate-400 mb-1 block">ชื่อ</label>
+                  <input
+                    type="text"
+                    value={displayData.affiliate.name}
+                    readOnly
+                    className="w-full bg-[#0f1729] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-slate-400 mb-1 block">อีเมล</label>
+                  <input
+                    type="email"
+                    value={displayData.affiliate.email}
+                    readOnly
+                    className="w-full bg-[#0f1729] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-slate-400 mb-1 block">เบอร์โทรศัพท์</label>
+                  <input
+                    type="tel"
+                    value={displayData.affiliate.phone}
+                    readOnly
+                    className="w-full bg-[#0f1729] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Bank Account Section */}
+            <div className="bg-[#1e293b]/60 backdrop-blur-md border border-white/5 rounded-2xl p-6 mb-6">
+              <h3 className="text-lg font-semibold text-white mb-4">ข้อมูลบัญชีธนาคาร</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm text-slate-400 mb-1 block">ธนาคาร</label>
+                  <select className="w-full bg-[#0f1729] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors">
+                    <option value="">เลือกธนาคาร</option>
+                    <option value="scb">ไทยพาณิชย์ (SCB)</option>
+                    <option value="kbank">กสิกรไทย (KBANK)</option>
+                    <option value="bbl">กรุงเทพ (BBL)</option>
+                    <option value="ktb">กรุงไทย (KTB)</option>
+                    <option value="tmb">ทหารไทยธนชาต (TTB)</option>
+                    <option value="bay">กรุงศรีอยุธยา (BAY)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm text-slate-400 mb-1 block">เลขที่บัญชี</label>
+                  <input
+                    type="text"
+                    placeholder="กรอกเลขที่บัญชี 10-12 หลัก"
+                    className="w-full bg-[#0f1729] border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-primary/50 transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-slate-400 mb-1 block">ชื่อบัญชี</label>
+                  <input
+                    type="text"
+                    placeholder="ชื่อ-นามสกุล ตรงตามบัญชีธนาคาร"
+                    className="w-full bg-[#0f1729] border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-primary/50 transition-colors"
+                  />
+                </div>
+              </div>
+              <button className="w-full mt-6 bg-primary hover:bg-primary/80 text-white font-bold py-3 px-6 rounded-full transition-colors">
+                บันทึกข้อมูลบัญชีธนาคาร
+              </button>
+            </div>
+
+            {/* Additional Info */}
+            <div className="bg-[#1e293b]/60 backdrop-blur-md border border-white/5 rounded-2xl p-6">
+              <div className="flex items-start gap-3">
+                <span className="material-symbols-outlined text-blue-400 text-xl mt-0.5">info</span>
+                <div>
+                  <p className="text-sm text-slate-300 leading-relaxed">
+                    ข้อมูลบัญชีธนาคารจะใช้สำหรับการโอนเงินค่าคอมมิชชั่นให้กับคุณ กรุณาตรวจสอบความถูกต้องก่อนบันทึก
+                  </p>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Stats Cards - Pending & Paid */}
-        {dashboardData && (
-          <div className="flex flex-wrap gap-5 p-5">
-            <div className="flex min-w-[140px] flex-1 flex-col gap-4 rounded-2xl p-6 bg-[#1e293b]/60 backdrop-blur-md border border-white/5 shadow-sm">
-              <div className="size-11 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
-                <span className="material-symbols-outlined">pending</span>
-              </div>
-              <div>
-                <p className="text-slate-400 text-sm font-medium leading-normal mb-1">Pending</p>
-                <p className="text-white tracking-tight text-2xl font-bold leading-tight">
-                  ฿ {formatCommission(dashboardData.stats.pendingCommission)}
-                </p>
-              </div>
-            </div>
-            <div className="flex min-w-[140px] flex-1 flex-col gap-4 rounded-2xl p-6 bg-[#1e293b]/60 backdrop-blur-md border border-white/5 shadow-sm">
-              <div className="size-11 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
-                <span className="material-symbols-outlined">check_circle</span>
-              </div>
-              <div>
-                <p className="text-slate-400 text-sm font-medium leading-normal mb-1">Paid</p>
-                <p className="text-white tracking-tight text-2xl font-bold leading-tight">
-                  ฿ {formatCommission(paidCommission)}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Referral Code Section */}
-        {dashboardData && (
-          <div className="px-5 pb-6">
-            <label className="text-sm text-slate-400 font-medium ml-1 mb-3 block">Your Referral Code</label>
-            <div className="flex items-center justify-between bg-[#1e293b] rounded-2xl border border-white/10 p-2 pl-6 shadow-sm">
-              <span className="text-primary font-bold text-xl tracking-widest font-mono">
-                {dashboardData.affiliate.affiliateCode}
-              </span>
-              <button
-                onClick={() => copyToClipboard(dashboardData.affiliate.affiliateCode)}
-                className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
-              >
-                <span className="material-symbols-outlined text-xl">
-                  {copied ? 'check' : 'content_copy'}
-                </span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Action Buttons */}
-        <div className="flex flex-col gap-4 px-5 pb-8 flex-grow justify-end">
-          <button
-            onClick={shareToLine}
-            disabled={isSharing}
-            className={`relative w-full cursor-pointer overflow-hidden rounded-full h-14 bg-line-green hover:bg-[#05b34c] transition-colors text-white shadow-lg shadow-green-900/30 group ${
-              isSharing ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            <div className="flex items-center justify-center gap-3 px-5 h-full w-full">
-              <span className="material-symbols-outlined fill-current text-2xl">chat_bubble</span>
-              <span className="text-lg font-bold tracking-wide">
-                {isSharing ? 'กำลังแชร์...' : 'Share via LINE'}
-              </span>
-            </div>
-          </button>
-          <button
-            onClick={copyReferralLink}
-            className="w-full cursor-pointer items-center justify-center overflow-hidden rounded-full h-14 border border-white/20 bg-white/5 hover:bg-white/10 text-white transition-all"
-          >
-            <div className="flex items-center justify-center gap-3 px-5">
-              <span className="material-symbols-outlined text-2xl">
-                {copiedLink ? 'check' : 'link'}
-              </span>
-              <span className="text-lg font-semibold">
-                {copiedLink ? 'Copied!' : 'Copy Referral Link'}
-              </span>
-            </div>
-          </button>
-        </div>
-
         {/* Bottom Navigation */}
-        <div className="fixed bottom-0 left-0 z-50 w-full bg-[#0f172a]/95 backdrop-blur-xl border-t border-white/5" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="fixed bottom-0 left-0 z-50 w-full bg-[#020c17]/95 backdrop-blur-xl border-t border-white/5" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
           <div className="flex h-16 items-center justify-around px-2">
-            <button className="flex flex-col items-center justify-center gap-1 p-2 text-primary">
-              <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>dashboard</span>
-              <span className="text-[10px] font-bold">Dashboard</span>
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className={`flex flex-col items-center justify-center gap-1 p-2 transition-colors ${
+                activeTab === 'dashboard' ? 'text-primary' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <span
+                className="material-symbols-outlined"
+                style={{ fontVariationSettings: activeTab === 'dashboard' ? "'FILL' 1" : "'FILL' 0" }}
+              >
+                dashboard
+              </span>
+              <span className={`text-[10px] ${activeTab === 'dashboard' ? 'font-bold' : 'font-medium'}`}>หน้าหลัก</span>
             </button>
-            <button className="flex flex-col items-center justify-center gap-1 p-2 text-slate-400 hover:text-white transition-colors">
-              <span className="material-symbols-outlined">bar_chart</span>
-              <span className="text-[10px] font-medium">Reports</span>
+            <button
+              onClick={() => setActiveTab('history')}
+              className={`flex flex-col items-center justify-center gap-1 p-2 transition-colors ${
+                activeTab === 'history' ? 'text-primary' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <span
+                className="material-symbols-outlined"
+                style={{ fontVariationSettings: activeTab === 'history' ? "'FILL' 1" : "'FILL' 0" }}
+              >
+                bar_chart
+              </span>
+              <span className={`text-[10px] ${activeTab === 'history' ? 'font-bold' : 'font-medium'}`}>ประวัติ</span>
             </button>
-            <button className="flex flex-col items-center justify-center gap-1 p-2 text-slate-400 hover:text-white transition-colors">
-              <span className="material-symbols-outlined">person</span>
-              <span className="text-[10px] font-medium">Profile</span>
+            <button
+              onClick={() => setActiveTab('profile')}
+              className={`flex flex-col items-center justify-center gap-1 p-2 transition-colors ${
+                activeTab === 'profile' ? 'text-primary' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <span
+                className="material-symbols-outlined"
+                style={{ fontVariationSettings: activeTab === 'profile' ? "'FILL' 1" : "'FILL' 0" }}
+              >
+                person
+              </span>
+              <span className={`text-[10px] ${activeTab === 'profile' ? 'font-bold' : 'font-medium'}`}>บัญชี</span>
             </button>
           </div>
           <div className="h-4 w-full"></div>
