@@ -582,7 +582,10 @@ export default function AffiliateRegisterForm() {
       const eventDbResponse = await fetch(`${apiUrl}/api/register-affiliate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          lineUserId: profile?.userId, // Add LINE User ID if available
+        }),
       });
 
       // Safely parse JSON response - handle cases where server returns non-JSON

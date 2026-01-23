@@ -1,6 +1,6 @@
 import { Elysia, t } from "elysia";
 import { cors } from "@elysiajs/cors";
-import { sql, insertAffiliate, checkConnection, checkAffiliate } from "./db.js";
+import { sql, insertAffiliate, checkConnection, checkAffiliate, getAffiliateByLineUserId } from "./db.js";
 import { sendConfirmationEmail } from "./sendEmail.js";
 import {
     registerAffiliate,
@@ -82,6 +82,7 @@ const affiliateSchema = t.Object({
         maxLength: 10, // Limited to 10 characters
         pattern: "^[A-Z0-9]+$"  // Only uppercase A-Z and 0-9
     }),
+    lineUserId: t.Optional(t.String()),
 });
 
 export const app = new Elysia()
@@ -143,6 +144,7 @@ export const app = new Elysia()
                 email: string;
                 phone: string;
                 affiliateCode: string;
+                lineUserId?: string;
             };
 
             try {
@@ -152,6 +154,7 @@ export const app = new Elysia()
                     email: data.email,
                     phone: data.phone,
                     affiliateCode: data.affiliateCode,
+                    lineUserId: data.lineUserId,
                 });
 
                 console.log(`Affiliate registered: ID ${affiliate.id}, Code ${data.affiliateCode}`);
@@ -421,7 +424,80 @@ export const app = new Elysia()
                 }
             },
         }
-    );
+    )
+    // Partner Dashboard endpoint
+    .get("/api/affiliate/dashboard/:lineUserId", async ({ params, set }) => {
+        const { lineUserId } = params;
+
+        if (!lineUserId) {
+            set.status = 400;
+            return {
+                success: false,
+                message: "LINE User ID is required",
+            };
+        }
+
+        try {
+            // Step 1: Query local DB to get affiliate_code using lineUserId
+            const localAffiliate = await getAffiliateByLineUserId(lineUserId);
+
+            if (!localAffiliate) {
+                set.status = 404;
+                return {
+                    success: false,
+                    message: "Affiliate not found. Please register first.",
+                };
+            }
+
+            // Step 2: Query main system DB to get stats using affiliate_code
+            const affiliateCode = localAffiliate.affiliate_code;
+
+            const mainSystemData = await mainSystemSql`
+                SELECT
+                    total_registrations,
+                    total_commission,
+                    approved_commission,
+                    pending_commission
+                FROM bootcamp_affiliates
+                WHERE code = ${affiliateCode}
+                LIMIT 1
+            `;
+
+            // Step 3: Combine and return data
+            const stats = mainSystemData.length > 0 ? mainSystemData[0] : {
+                total_registrations: 0,
+                total_commission: 0,
+                approved_commission: 0,
+                pending_commission: 0,
+            };
+
+            return {
+                success: true,
+                data: {
+                    affiliate: {
+                        name: localAffiliate.name,
+                        email: localAffiliate.email,
+                        phone: localAffiliate.phone,
+                        affiliateCode: localAffiliate.affiliate_code,
+                        createdAt: localAffiliate.created_at,
+                    },
+                    stats: {
+                        totalRegistrations: stats.total_registrations,
+                        totalCommission: stats.total_commission,
+                        approvedCommission: stats.approved_commission,
+                        pendingCommission: stats.pending_commission,
+                    },
+                },
+            };
+        } catch (error: any) {
+            console.error("Dashboard API error:", error);
+            set.status = 500;
+            return {
+                success: false,
+                message: "Failed to fetch dashboard data",
+            };
+        }
+    });
 
 // Only listen when running directly (not via export)
 // @ts-ignore

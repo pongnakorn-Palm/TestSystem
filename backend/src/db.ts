@@ -32,6 +32,7 @@ export interface AffiliateData {
     email: string;
     phone: string;
     affiliateCode: string;
+    lineUserId?: string;
 }
 
 // Insert affiliate into database
@@ -41,12 +42,14 @@ export async function insertAffiliate(data: AffiliateData) {
       name,
       email,
       phone,
-      affiliate_code
+      affiliate_code,
+      line_user_id
     ) VALUES (
       ${data.name},
       ${data.email},
       ${data.phone},
-      ${data.affiliateCode}
+      ${data.affiliateCode},
+      ${data.lineUserId || null}
     )
     RETURNING id, created_at
   `;
@@ -76,6 +79,18 @@ export async function checkAffiliate(
     }
 
     return result ? result.length > 0 : false;
+}
+
+// Get affiliate by LINE user ID
+export async function getAffiliateByLineUserId(lineUserId: string) {
+    const result = await sql`
+        SELECT id, name, email, phone, affiliate_code, created_at
+        FROM affiliates
+        WHERE line_user_id = ${lineUserId}
+        LIMIT 1
+    `;
+
+    return result.length > 0 ? result[0] : null;
 }
 
 // Create new order
