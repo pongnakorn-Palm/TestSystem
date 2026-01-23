@@ -270,11 +270,6 @@ export default function PartnerPortal() {
     return <DashboardSkeleton />;
   }
 
-  // Calculate paid commission
-  const paidCommission = dashboardData
-    ? dashboardData.stats.totalCommission - dashboardData.stats.pendingCommission
-    : 0;
-
   // Mock data for development/testing (comment out when using real data)
   const useMockData = true;
   const mockStats = useMockData && dashboardData ? {
