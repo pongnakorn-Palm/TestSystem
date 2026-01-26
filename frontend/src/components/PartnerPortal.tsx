@@ -318,11 +318,6 @@ export default function PartnerPortal() {
     return hasFieldChanges || hasImageChange;
   };
 
-  // Pull-to-refresh states
-  const [pullDistance, setPullDistance] = useState(0);
-  const touchStartY = useRef(0);
-  const containerRef = useRef<HTMLDivElement>(null);
-
   // Fetch dashboard data when logged in
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -565,37 +560,6 @@ export default function PartnerPortal() {
     }
   };
 
-  // Pull-to-Refresh Handlers
-  const handleTouchStart = (e: React.TouchEvent) => {
-    const scrollTop = containerRef.current?.scrollTop || 0;
-    if (scrollTop === 0 && activeTab === "dashboard") {
-      touchStartY.current = e.touches[0].clientY;
-    }
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    const scrollTop = containerRef.current?.scrollTop || 0;
-    if (scrollTop === 0 && !isRefreshing && activeTab === "dashboard") {
-      const currentY = e.touches[0].clientY;
-      const distance = Math.max(0, currentY - touchStartY.current);
-
-      if (distance > 0 && distance < 100) {
-        setPullDistance(distance);
-      }
-    }
-  };
-
-  const handleTouchEnd = async () => {
-    if (pullDistance > 60 && !isRefreshing) {
-      triggerHaptic("medium");
-      setPullDistance(0);
-      await refreshStats();
-      triggerHaptic("light");
-    } else {
-      setPullDistance(0);
-    }
-  };
-
   // Share to LINE
   const shareToLine = async () => {
     if (!liffObject || !dashboardData || isSharing) return;
@@ -775,35 +739,7 @@ export default function PartnerPortal() {
         title={`${displayData?.affiliate.name || "สถิติของฉัน"} - AIYA Affiliate`}
         description={`ดูสถิติและค่าคอมมิชชั่นของคุณ | จำนวนผู้สมัคร: ${displayData?.stats.totalRegistrations || 0} คน | รายได้: ${displayData ? formatCommission(displayData.stats.totalCommission) : 0} บาท`}
       />
-      <div
-        ref={containerRef}
-        className="relative flex min-h-screen w-full flex-col bg-gradient-to-br from-aiya-navy via-[#0a1628] to-aiya-navy text-white overflow-x-hidden pb-24 font-sans overflow-y-auto"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        style={{
-          transform: `translateY(${Math.min(pullDistance * 0.5, 50)}px)`,
-          transition: pullDistance === 0 ? "transform 0.3s ease" : "none",
-        }}
-      >
-        {/* Pull-to-Refresh Indicator */}
-        {pullDistance > 0 && activeTab === "dashboard" && (
-          <div className="absolute top-2 left-0 right-0 z-50 flex justify-center pointer-events-none">
-            <div className="rounded-full bg-white/10 p-2 backdrop-blur-xl border border-white/20">
-              <span
-                className={`material-symbols-outlined text-white ${isRefreshing ? "animate-spin" : ""}`}
-                style={{
-                  fontSize: "20px",
-                  transform: `rotate(${pullDistance * 3}deg)`,
-                  transition: "transform 0.1s ease",
-                }}
-              >
-                refresh
-              </span>
-            </div>
-          </div>
-        )}
-
+      <div className="relative flex min-h-screen w-full flex-col bg-gradient-to-br from-aiya-navy via-[#0a1628] to-aiya-navy text-white overflow-x-hidden pb-24 font-sans overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-14 pb-6">
           <div className="flex items-center gap-4">
@@ -1704,90 +1640,93 @@ export default function PartnerPortal() {
       {/* Bottom Navigation - Using Portal to bypass PageTransition transform stacking context */}
       {createPortal(
         <div
-          className="fixed bottom-0 left-0 z-50 w-full bg-aiya-navy/95 backdrop-blur-xl border-t border-aiya-purple/20 shadow-[0_-4px_20px_rgba(58,35,181,0.15)]"
-          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+          className="fixed bottom-0 left-0 z-50 w-full"
+          style={{ backgroundColor: "#070d1a" }}
         >
-          <div className="flex h-16 items-center justify-around px-2">
-            <button
-              onClick={() => {
-                triggerHaptic("light");
-                setActiveTab("dashboard");
-              }}
-              className={`flex flex-col items-center justify-center gap-1 p-2 transition-colors active:scale-95 ${
-                activeTab === "dashboard"
-                  ? "text-blue-400"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              <span
-                className="material-symbols-outlined"
-                style={{
-                  fontVariationSettings:
-                    activeTab === "dashboard" ? "'FILL' 1" : "'FILL' 0",
+          <div className="bg-aiya-navy/95 backdrop-blur-xl border-t border-aiya-purple/20 shadow-[0_-4px_20px_rgba(58,35,181,0.15)]">
+            <div className="flex h-16 items-center justify-around px-2">
+              <button
+                onClick={() => {
+                  triggerHaptic("light");
+                  setActiveTab("dashboard");
                 }}
+                className={`flex flex-col items-center justify-center gap-1 p-2 transition-colors active:scale-95 ${
+                  activeTab === "dashboard"
+                    ? "text-blue-400"
+                    : "text-slate-400 hover:text-white"
+                }`}
               >
-                dashboard
-              </span>
-              <span
-                className={`text-[10px] ${activeTab === "dashboard" ? "font-bold" : "font-medium"}`}
-              >
-                หน้าหลัก
-              </span>
-            </button>
-            <button
-              onClick={() => {
-                triggerHaptic("light");
-                setActiveTab("history");
-              }}
-              className={`flex flex-col items-center justify-center gap-1 p-2 transition-colors active:scale-95 ${
-                activeTab === "history"
-                  ? "text-blue-400"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              <span
-                className="material-symbols-outlined"
-                style={{
-                  fontVariationSettings:
-                    activeTab === "history" ? "'FILL' 1" : "'FILL' 0",
+                <span
+                  className="material-symbols-outlined"
+                  style={{
+                    fontVariationSettings:
+                      activeTab === "dashboard" ? "'FILL' 1" : "'FILL' 0",
+                  }}
+                >
+                  dashboard
+                </span>
+                <span
+                  className={`text-[10px] ${activeTab === "dashboard" ? "font-bold" : "font-medium"}`}
+                >
+                  หน้าหลัก
+                </span>
+              </button>
+              <button
+                onClick={() => {
+                  triggerHaptic("light");
+                  setActiveTab("history");
                 }}
+                className={`flex flex-col items-center justify-center gap-1 p-2 transition-colors active:scale-95 ${
+                  activeTab === "history"
+                    ? "text-blue-400"
+                    : "text-slate-400 hover:text-white"
+                }`}
               >
-                bar_chart
-              </span>
-              <span
-                className={`text-[10px] ${activeTab === "history" ? "font-bold" : "font-medium"}`}
-              >
-                ประวัติ
-              </span>
-            </button>
-            <button
-              onClick={() => {
-                triggerHaptic("light");
-                setActiveTab("profile");
-              }}
-              className={`flex flex-col items-center justify-center gap-1 p-2 transition-colors active:scale-95 ${
-                activeTab === "profile"
-                  ? "text-blue-400"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              <span
-                className="material-symbols-outlined"
-                style={{
-                  fontVariationSettings:
-                    activeTab === "profile" ? "'FILL' 1" : "'FILL' 0",
+                <span
+                  className="material-symbols-outlined"
+                  style={{
+                    fontVariationSettings:
+                      activeTab === "history" ? "'FILL' 1" : "'FILL' 0",
+                  }}
+                >
+                  bar_chart
+                </span>
+                <span
+                  className={`text-[10px] ${activeTab === "history" ? "font-bold" : "font-medium"}`}
+                >
+                  ประวัติ
+                </span>
+              </button>
+              <button
+                onClick={() => {
+                  triggerHaptic("light");
+                  setActiveTab("profile");
                 }}
+                className={`flex flex-col items-center justify-center gap-1 p-2 transition-colors active:scale-95 ${
+                  activeTab === "profile"
+                    ? "text-blue-400"
+                    : "text-slate-400 hover:text-white"
+                }`}
               >
-                person
-              </span>
-              <span
-                className={`text-[10px] ${activeTab === "profile" ? "font-bold" : "font-medium"}`}
-              >
-                บัญชี
-              </span>
-            </button>
+                <span
+                  className="material-symbols-outlined"
+                  style={{
+                    fontVariationSettings:
+                      activeTab === "profile" ? "'FILL' 1" : "'FILL' 0",
+                  }}
+                >
+                  person
+                </span>
+                <span
+                  className={`text-[10px] ${activeTab === "profile" ? "font-bold" : "font-medium"}`}
+                >
+                  บัญชี
+                </span>
+              </button>
+            </div>
           </div>
-          <div className="h-4 w-full"></div>
+          {/* Safe area fill */}
+          <div style={{ height: "env(safe-area-inset-bottom)" }}></div>
         </div>,
         document.body
       )}
