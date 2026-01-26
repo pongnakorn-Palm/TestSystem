@@ -36,18 +36,20 @@ interface DashboardData {
 }
 
 export default function PartnerPortal() {
-  const { isLoggedIn, profile, login, isReady, liffObject, isInClient } = useLiff();
+  const { isLoggedIn, profile, login, isReady, liffObject, isInClient } =
+    useLiff();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(
-    null
+    null,
   );
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [copiedLink, setCopiedLink] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [isSharing, setIsSharing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'history' | 'profile'>('dashboard');
+  const [activeTab, setActiveTab] = useState<
+    "dashboard" | "history" | "profile"
+  >("dashboard");
   const [referrals, setReferrals] = useState<any[]>([]);
   const [isLoadingReferrals, setIsLoadingReferrals] = useState(false);
   const [referralsError, setReferralsError] = useState<string | null>(null);
@@ -58,7 +60,9 @@ export default function PartnerPortal() {
   const [accountName, setAccountName] = useState<string>("");
   const [passbookImage, setPassbookImage] = useState<File | null>(null);
   const [passbookPreview, setPassbookPreview] = useState<string | null>(null);
-  const [saveButtonState, setSaveButtonState] = useState<'idle' | 'loading' | 'success'>('idle');
+  const [saveButtonState, setSaveButtonState] = useState<
+    "idle" | "loading" | "success"
+  >("idle");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Original bank data (for detecting changes)
@@ -68,58 +72,211 @@ export default function PartnerPortal() {
     accountName: string;
   } | null>(null);
 
-  // Bank modal states
-  const [showBankModal, setShowBankModal] = useState(false);
-  const [bankSearchQuery, setBankSearchQuery] = useState("");
+  // Custom dropdown state
+  const [showBankDropdown, setShowBankDropdown] = useState(false);
+  const bankDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Passbook image modal state
-  const [showPassbookModal, setShowPassbookModal] = useState(false);
+  // Notification states
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<Array<{
+    id: string;
+    type: 'new_referral' | 'commission_approved' | 'commission_paid' | 'welcome';
+    title: string;
+    message: string;
+    timestamp: Date;
+    read: boolean;
+  }>>([]);
+  const notificationRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        bankDropdownRef.current &&
+        !bankDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowBankDropdown(false);
+      }
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target as Node)
+      ) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Generate notifications from referrals data
+  useEffect(() => {
+    if (referrals.length > 0) {
+      const lastSeenTime = localStorage.getItem('notifications_last_seen');
+      const lastSeen = lastSeenTime ? new Date(lastSeenTime) : new Date(0);
+
+      const newNotifications = referrals.slice(0, 10).map((referral) => {
+        const createdAt = new Date(referral.createdAt);
+        const isNew = createdAt > lastSeen;
+
+        let type: 'new_referral' | 'commission_approved' | 'commission_paid' = 'new_referral';
+        let title = 'มีผู้ใช้รหัสแนะนำใหม่';
+        let message = `${referral.firstName} ${referral.lastName} ใช้รหัสของคุณลงทะเบียน`;
+
+        if (referral.commissionStatus === 'paid') {
+          type = 'commission_paid';
+          title = 'ค่าคอมมิชชั่นถูกจ่ายแล้ว';
+          message = `฿${(referral.commissionAmount / 100).toFixed(2)} จาก ${referral.firstName}`;
+        } else if (referral.commissionStatus === 'approved') {
+          type = 'commission_approved';
+          title = 'ค่าคอมมิชชั่นได้รับการอนุมัติ';
+          message = `฿${(referral.commissionAmount / 100).toFixed(2)} จาก ${referral.firstName} รอการจ่าย`;
+        }
+
+        return {
+          id: `${referral.id}-${type}`,
+          type,
+          title,
+          message,
+          timestamp: createdAt,
+          read: !isNew,
+        };
+      });
+
+      setNotifications(newNotifications);
+    }
+  }, [referrals]);
+
+  // Mark all notifications as read
+  const markAllNotificationsRead = () => {
+    localStorage.setItem('notifications_last_seen', new Date().toISOString());
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
+
+  // Get unread count
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   // Thai Bank List with Official Logos
   const BANKS = [
-    { id: 'kbank', name: 'กสิกรไทย', fullName: 'ธนาคารกสิกรไทย', logo: 'https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/KBANK.png', color: '#138f2d' },
-    { id: 'scb', name: 'ไทยพาณิชย์', fullName: 'ธนาคารไทยพาณิชย์', logo: 'https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/SCB.png', color: '#4e2e7f' },
-    { id: 'ktb', name: 'กรุงไทย', fullName: 'ธนาคารกรุงไทย', logo: 'https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/KTB.png', color: '#1ba5e1' },
-    { id: 'bbl', name: 'กรุงเทพ', fullName: 'ธนาคารกรุงเทพ', logo: 'https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/BBL.png', color: '#1e4598' },
-    { id: 'ttb', name: 'ทหารไทยธนชาต', fullName: 'ธนาคารทหารไทยธนชาต', logo: 'https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/TTB.png', color: '#0056ff' },
-    { id: 'bay', name: 'กรุงศรี', fullName: 'ธนาคารกรุงศรีอยุธยา', logo: 'https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/BAY.png', color: '#fec43b' },
-    { id: 'gsb', name: 'ออมสิน', fullName: 'ธนาคารออมสิน', logo: 'https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/GSB.png', color: '#eb198d' },
-    { id: 'tisco', name: 'ทิสโก้', fullName: 'ธนาคารทิสโก้', logo: 'https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/TISCO.png', color: '#123f6d' },
-    { id: 'kkp', name: 'เกียรตินาคินภัทร', fullName: 'ธนาคารเกียรตินาคินภัทร', logo: 'https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/KKP.png', color: '#694d8b' },
-    { id: 'cimb', name: 'ซีไอเอ็มบี', fullName: 'ธนาคารซีไอเอ็มบีไทย', logo: 'https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/CIMB.png', color: '#7e2f36' },
-    { id: 'uob', name: 'ยูโอบี', fullName: 'ธนาคารยูโอบี', logo: 'https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/UOB.png', color: '#0b3979' },
-    { id: 'lhb', name: 'แลนด์ แอนด์ เฮ้าส์', fullName: 'ธนาคารแลนด์ แอนด์ เฮ้าส์', logo: 'https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/LHB.png', color: '#6d6e71' },
-    { id: 'baac', name: 'ธ.ก.ส.', fullName: 'ธนาคารเพื่อการเกษตรและสหกรณ์การเกษตร', logo: 'https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/BAAC.png', color: '#4b9b1d' },
-    { id: 'ghb', name: 'อาคารสงเคราะห์', fullName: 'ธนาคารอาคารสงเคราะห์', logo: 'https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/GHB.png', color: '#f57d23' },
+    {
+      id: "kbank",
+      abbr: "KBANK",
+      name: "กสิกรไทย",
+      logo: "https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/KBANK.png",
+      color: "#138f2d",
+    },
+    {
+      id: "scb",
+      abbr: "SCB",
+      name: "ไทยพาณิชย์",
+      logo: "https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/SCB.png",
+      color: "#4e2e7f",
+    },
+    {
+      id: "ktb",
+      abbr: "KTB",
+      name: "กรุงไทย",
+      logo: "https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/KTB.png",
+      color: "#1ba5e1",
+    },
+    {
+      id: "bbl",
+      abbr: "BBL",
+      name: "กรุงเทพ",
+      logo: "https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/BBL.png",
+      color: "#1e4598",
+    },
+    {
+      id: "ttb",
+      abbr: "TTB",
+      name: "ทหารไทยธนชาต",
+      logo: "https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/TTB.png",
+      color: "#0056ff",
+    },
+    {
+      id: "bay",
+      abbr: "BAY",
+      name: "กรุงศรีอยุธยา",
+      logo: "https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/BAY.png",
+      color: "#fec43b",
+    },
+    {
+      id: "gsb",
+      abbr: "GSB",
+      name: "ออมสิน",
+      logo: "https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/GSB.png",
+      color: "#eb198d",
+    },
+    {
+      id: "tisco",
+      abbr: "TISCO",
+      name: "ทิสโก้",
+      logo: "https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/TISCO.png",
+      color: "#123f6d",
+    },
+    {
+      id: "kkp",
+      abbr: "KKP",
+      name: "เกียรตินาคินภัทร",
+      logo: "https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/KKP.png",
+      color: "#694d8b",
+    },
+    {
+      id: "cimb",
+      abbr: "CIMB",
+      name: "ซีไอเอ็มบีไทย",
+      logo: "https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/CIMB.png",
+      color: "#7e2f36",
+    },
+    {
+      id: "uob",
+      abbr: "UOB",
+      name: "ยูโอบี",
+      logo: "https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/UOB.png",
+      color: "#0b3979",
+    },
+    {
+      id: "lhb",
+      abbr: "LH BANK",
+      name: "แลนด์ แอนด์ เฮ้าส์",
+      logo: "https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/LHB.png",
+      color: "#6d6e71",
+    },
+    {
+      id: "baac",
+      abbr: "BAAC",
+      name: "ธ.ก.ส.",
+      logo: "https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/BAAC.png",
+      color: "#4b9b1d",
+    },
+    {
+      id: "ghb",
+      abbr: "GHB",
+      name: "อาคารสงเคราะห์",
+      logo: "https://raw.githubusercontent.com/casperstack/thai-banks-logo/master/icons/GHB.png",
+      color: "#f57d23",
+    },
   ];
 
-  // Filter banks based on search query
-  const filteredBanks = BANKS.filter(bank =>
-    bank.name.toLowerCase().includes(bankSearchQuery.toLowerCase()) ||
-    bank.fullName.toLowerCase().includes(bankSearchQuery.toLowerCase()) ||
-    bank.id.toLowerCase().includes(bankSearchQuery.toLowerCase())
-  );
-
   // Get selected bank details
-  const selectedBankData = BANKS.find(bank => bank.id === selectedBank);
+  const selectedBankData = BANKS.find((bank) => bank.id === selectedBank);
 
   // Format account number as xxx-x-xxxxx-x
   const formatAccountNumber = (value: string) => {
     // Remove all non-digits
-    const digits = value.replace(/\D/g, '');
+    const digits = value.replace(/\D/g, "");
 
     // Apply Thai bank account format: xxx-x-xxxxx-x
-    let formatted = '';
+    let formatted = "";
     if (digits.length > 0) {
       formatted = digits.substring(0, 3);
       if (digits.length > 3) {
-        formatted += '-' + digits.substring(3, 4);
+        formatted += "-" + digits.substring(3, 4);
       }
       if (digits.length > 4) {
-        formatted += '-' + digits.substring(4, 9);
+        formatted += "-" + digits.substring(4, 9);
       }
       if (digits.length > 9) {
-        formatted += '-' + digits.substring(9, 10);
+        formatted += "-" + digits.substring(9, 10);
       }
     }
     return formatted;
@@ -139,7 +296,7 @@ export default function PartnerPortal() {
       setAccountNumber(formatted);
       triggerHaptic("light");
     } catch (err) {
-      console.error('Failed to read clipboard:', err);
+      console.error("Failed to read clipboard:", err);
     }
   };
 
@@ -148,7 +305,7 @@ export default function PartnerPortal() {
     if (!originalBankData) return true; // No original data = first save
 
     // Compare digits only for account number (since it's formatted with dashes)
-    const currentAccountDigits = accountNumber.replace(/\D/g, '');
+    const currentAccountDigits = accountNumber.replace(/\D/g, "");
 
     const hasFieldChanges =
       selectedBank !== originalBankData.bankName ||
@@ -176,7 +333,7 @@ export default function PartnerPortal() {
       try {
         const apiUrl = import.meta.env.VITE_API_URL || "";
         const response = await fetch(
-          `${apiUrl}/api/affiliate/dashboard/${profile.userId}`
+          `${apiUrl}/api/affiliate/dashboard/${profile.userId}`,
         );
         const data = await response.json();
 
@@ -193,9 +350,7 @@ export default function PartnerPortal() {
         }
       } catch (err: any) {
         console.error("Dashboard fetch error:", err);
-        setError(
-          err.message || "ไม่สามารถโหลดข้อมูลได้ กรุณาลองใหม่อีกครั้ง"
-        );
+        setError(err.message || "ไม่สามารถโหลดข้อมูลได้ กรุณาลองใหม่อีกครั้ง");
       } finally {
         setIsLoading(false);
       }
@@ -218,7 +373,7 @@ export default function PartnerPortal() {
     try {
       const apiUrl = import.meta.env.VITE_API_URL || "";
       const response = await fetch(
-        `${apiUrl}/api/affiliate/referrals/${profile.userId}`
+        `${apiUrl}/api/affiliate/referrals/${profile.userId}`,
       );
       const data = await response.json();
 
@@ -234,7 +389,7 @@ export default function PartnerPortal() {
     } catch (err: any) {
       console.error("Referrals fetch error:", err);
       setReferralsError(
-        err.message || "ไม่สามารถโหลดประวัติได้ กรุณาลองใหม่อีกครั้ง"
+        err.message || "ไม่สามารถโหลดประวัติได้ กรุณาลองใหม่อีกครั้ง",
       );
     } finally {
       setIsLoadingReferrals(false);
@@ -243,22 +398,10 @@ export default function PartnerPortal() {
 
   // Fetch referral history when switching to history tab
   useEffect(() => {
-    if (activeTab === 'history') {
+    if (activeTab === "history") {
       handleFetchReferrals();
     }
   }, [activeTab, isLoggedIn, profile?.userId]);
-
-  // Prevent body scroll when passbook modal is open
-  useEffect(() => {
-    if (showPassbookModal) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [showPassbookModal]);
 
   // Populate bank form when dashboard data loads
   useEffect(() => {
@@ -277,7 +420,7 @@ export default function PartnerPortal() {
       // Store original data for comparison (using digits only for account number)
       setOriginalBankData({
         bankName,
-        accountNumber: accountNum.replace(/\D/g, ''),
+        accountNumber: accountNum.replace(/\D/g, ""),
         accountName: accountN,
       });
     }
@@ -291,7 +434,7 @@ export default function PartnerPortal() {
     try {
       const apiUrl = import.meta.env.VITE_API_URL || "";
       const response = await fetch(
-        `${apiUrl}/api/affiliate/dashboard/${profile.userId}`
+        `${apiUrl}/api/affiliate/dashboard/${profile.userId}`,
       );
       const data = await response.json();
 
@@ -319,14 +462,14 @@ export default function PartnerPortal() {
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
-      alert('กรุณาเลือกไฟล์รูปภาพเท่านั้น');
+      alert("กรุณาเลือกไฟล์รูปภาพเท่านั้น");
       return;
     }
 
     // Validate file size (max 2MB)
     const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
     if (file.size > MAX_FILE_SIZE) {
-      alert('ขนาดไฟล์ต้องไม่เกิน 2MB');
+      alert("ขนาดไฟล์ต้องไม่เกิน 2MB");
       return;
     }
 
@@ -346,20 +489,20 @@ export default function PartnerPortal() {
 
     // Validate required fields
     if (!selectedBank || !accountNumber || !accountName) {
-      alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+      alert("กรุณากรอกข้อมูลให้ครบถ้วน");
       triggerHaptic("medium");
       return;
     }
 
     // Validate account number (strip dashes for validation)
-    const digitsOnly = accountNumber.replace(/\D/g, '');
+    const digitsOnly = accountNumber.replace(/\D/g, "");
     if (!/^\d{10,12}$/.test(digitsOnly)) {
-      alert('เลขที่บัญชีต้องเป็นตัวเลข 10-12 หลัก');
+      alert("เลขที่บัญชีต้องเป็นตัวเลข 10-12 หลัก");
       triggerHaptic("medium");
       return;
     }
 
-    setSaveButtonState('loading');
+    setSaveButtonState("loading");
     triggerHaptic("light");
 
     try {
@@ -377,7 +520,7 @@ export default function PartnerPortal() {
         {
           method: "PUT",
           body: formData,
-        }
+        },
       );
 
       const data = await response.json();
@@ -387,10 +530,7 @@ export default function PartnerPortal() {
       }
 
       if (data.success) {
-        // Close any open modals
-        setShowBankModal(false);
-
-        setSaveButtonState('success');
+        setSaveButtonState("success");
         triggerHaptic("heavy");
 
         // Refresh dashboard data to get updated bank info
@@ -411,7 +551,7 @@ export default function PartnerPortal() {
 
         // Revert button to idle after 3 seconds
         setTimeout(() => {
-          setSaveButtonState('idle');
+          setSaveButtonState("idle");
         }, 3000);
       } else {
         throw new Error(data.message);
@@ -419,7 +559,7 @@ export default function PartnerPortal() {
     } catch (err: any) {
       console.error("Profile save error:", err);
       alert(err.message || "ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง");
-      setSaveButtonState('idle');
+      setSaveButtonState("idle");
       triggerHaptic("medium");
     }
   };
@@ -427,14 +567,14 @@ export default function PartnerPortal() {
   // Pull-to-Refresh Handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     const scrollTop = containerRef.current?.scrollTop || 0;
-    if (scrollTop === 0 && activeTab === 'dashboard') {
+    if (scrollTop === 0 && activeTab === "dashboard") {
       touchStartY.current = e.touches[0].clientY;
     }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     const scrollTop = containerRef.current?.scrollTop || 0;
-    if (scrollTop === 0 && !isRefreshing && activeTab === 'dashboard') {
+    if (scrollTop === 0 && !isRefreshing && activeTab === "dashboard") {
       const currentY = e.touches[0].clientY;
       const distance = Math.max(0, currentY - touchStartY.current);
 
@@ -510,22 +650,28 @@ export default function PartnerPortal() {
     });
   };
 
-  // Copy referral link
-  const copyReferralLink = () => {
-    if (!dashboardData) return;
-    const referralLink = `https://aiya-bootcamp.vercel.app/tickets?referral=${dashboardData.affiliate.affiliateCode}`;
-    navigator.clipboard.writeText(referralLink).then(() => {
-      setCopiedLink(true);
-      setTimeout(() => setCopiedLink(false), 2000);
-    });
-  };
-
   // Format commission (stored in cents, convert to baht)
   const formatCommission = (cents: number) => {
     return (cents / 100).toLocaleString("th-TH", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
+  };
+
+  // Format relative time (e.g., "2 ชั่วโมงที่แล้ว")
+  const formatRelativeTime = (date: Date) => {
+    const now = new Date();
+    const diff = now.getTime() - new Date(date).getTime();
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (seconds < 60) return 'เมื่อสักครู่';
+    if (minutes < 60) return `${minutes} นาทีที่แล้ว`;
+    if (hours < 24) return `${hours} ชั่วโมงที่แล้ว`;
+    if (days < 7) return `${days} วันที่แล้ว`;
+    return new Date(date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
   };
 
   // Show loading spinner while LIFF is initializing
@@ -560,9 +706,7 @@ export default function PartnerPortal() {
               />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-white mb-3">
-            สถิติของฉัน
-          </h2>
+          <h2 className="text-2xl font-bold text-white mb-3">สถิติของฉัน</h2>
           <p className="text-white/70 mb-6">
             กรุณาเข้าสู่ระบบด้วย LINE เพื่อดูยอดและสถิติของคุณ
           </p>
@@ -570,11 +714,7 @@ export default function PartnerPortal() {
             onClick={login}
             className="w-full flex items-center justify-center gap-2 bg-line-green hover:bg-[#05b34b] text-white font-medium px-6 py-3 rounded-full transition-colors duration-200"
           >
-            <svg
-              className="w-6 h-6"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
             </svg>
             เข้าสู่ระบบด้วย LINE
@@ -642,196 +782,19 @@ export default function PartnerPortal() {
         onTouchEnd={handleTouchEnd}
         style={{
           transform: `translateY(${Math.min(pullDistance * 0.5, 50)}px)`,
-          transition: pullDistance === 0 ? 'transform 0.3s ease' : 'none',
+          transition: pullDistance === 0 ? "transform 0.3s ease" : "none",
         }}
       >
-
-        {/* Bank Selection Modal */}
-        {showBankModal && (
-          <div className="fixed inset-0 z-[110]">
-            {/* Backdrop */}
-            <div
-              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-              onClick={() => {
-                setShowBankModal(false);
-                setBankSearchQuery("");
-                triggerHaptic("light");
-              }}
-            />
-
-            {/* Modal Content - Bottom Sheet */}
-            <div className="fixed inset-x-0 bottom-0 z-[111] w-full md:max-w-2xl md:left-1/2 md:-translate-x-1/2 bg-[#1e293b] rounded-t-3xl md:rounded-3xl md:bottom-auto md:top-1/2 md:-translate-y-1/2 shadow-2xl max-h-[85vh] flex flex-col animate-[slideUp_0.3s_ease-out]">
-              {/* Header */}
-              <div className="flex-shrink-0 flex items-center justify-between p-6 pb-4 border-b border-white/10">
-                <div>
-                  <h3 className="text-xl font-bold text-white">เลือกธนาคารของคุณ</h3>
-                  <p className="text-sm text-slate-400 mt-1">เลือกจาก {BANKS.length} ธนาคาร</p>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowBankModal(false);
-                    setBankSearchQuery("");
-                    triggerHaptic("light");
-                  }}
-                  className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors active:scale-95"
-                >
-                  <span className="material-symbols-outlined text-white">close</span>
-                </button>
-              </div>
-
-              {/* Search Bar */}
-              <div className="flex-shrink-0 px-6 pt-4 pb-3">
-                <div className="relative">
-                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">
-                    search
-                  </span>
-                  <input
-                    type="text"
-                    value={bankSearchQuery}
-                    onChange={(e) => setBankSearchQuery(e.target.value)}
-                    placeholder="ค้นหาชื่อธนาคาร..."
-                    className="w-full bg-aiya-navy/80 border border-aiya-purple/20 rounded-xl pl-11 pr-4 py-3 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-400/50 transition-colors"
-                  />
-                  {bankSearchQuery && (
-                    <button
-                      onClick={() => setBankSearchQuery("")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
-                    >
-                      <span className="material-symbols-outlined text-sm text-slate-400">close</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Bank Grid */}
-              <div className="flex-1 overflow-y-auto px-6 pb-6 overscroll-contain">
-                {filteredBanks.length > 0 ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {filteredBanks.map((bank) => (
-                      <button
-                        key={bank.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedBank(bank.id);
-                          setShowBankModal(false);
-                          setBankSearchQuery("");
-                          triggerHaptic("medium");
-                        }}
-                        className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all active:scale-95 ${
-                          selectedBank === bank.id
-                            ? 'shadow-lg'
-                            : 'border-white/10 bg-aiya-navy/30 hover:border-white/20 hover:bg-aiya-navy/50'
-                        }`}
-                        style={{
-                          borderColor: selectedBank === bank.id ? bank.color : undefined,
-                          backgroundColor: selectedBank === bank.id ? `${bank.color}15` : undefined,
-                        }}
-                      >
-                        <div className="w-16 h-16 rounded-xl bg-white p-2.5 flex items-center justify-center mb-3 shadow-md">
-                          <img
-                            src={bank.logo}
-                            alt={bank.name}
-                            className="w-full h-full object-contain"
-                            onError={(e) => {
-                              // Fallback to colored circle with initials
-                              const target = e.currentTarget;
-                              target.style.display = 'none';
-                              const parent = target.parentElement;
-                              if (parent) {
-                                parent.style.backgroundColor = bank.color;
-                                parent.style.padding = '0';
-                                parent.innerHTML = `<span class="text-white text-sm font-bold">${bank.id.substring(0, 2).toUpperCase()}</span>`;
-                              }
-                            }}
-                          />
-                        </div>
-                        <span className={`text-sm font-medium text-center leading-tight ${
-                          selectedBank === bank.id ? 'text-white' : 'text-slate-300'
-                        }`}>
-                          {bank.name}
-                        </span>
-                        {selectedBank === bank.id && (
-                          <div className="mt-2 w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: bank.color }}>
-                            <span className="material-symbols-outlined text-white text-sm">check</span>
-                          </div>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
-                      <span className="material-symbols-outlined text-slate-500 text-3xl">search_off</span>
-                    </div>
-                    <p className="text-slate-400 font-medium">ไม่พบธนาคารที่ค้นหา</p>
-                    <p className="text-slate-500 text-sm mt-1">ลองค้นหาด้วยชื่ออื่น</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Passbook Image Modal */}
-        {showPassbookModal && passbookPreview && (
-          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-            {/* Backdrop - Click to close */}
-            <div
-              className="fixed inset-0"
-              onClick={() => {
-                setShowPassbookModal(false);
-                triggerHaptic("light");
-              }}
-            />
-
-            {/* Modal Content - Always Centered */}
-            <div className="relative max-h-[80vh] w-full max-w-lg animate-in zoom-in-95 fade-in duration-300">
-              {/* Close Button */}
-              <button
-                onClick={() => {
-                  setShowPassbookModal(false);
-                  triggerHaptic("light");
-                }}
-                className="absolute -top-12 right-0 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/30 backdrop-blur-md flex items-center justify-center transition-colors z-10"
-              >
-                <span className="material-symbols-outlined text-white text-xl">close</span>
-              </button>
-
-              {/* Image Container */}
-              <div className="relative w-full h-full rounded-lg overflow-hidden shadow-2xl">
-                <img
-                  src={passbookPreview}
-                  alt="Passbook"
-                  className="object-contain w-full h-full rounded-lg"
-                />
-
-                {/* Action Button - Overlaid on Image */}
-                <button
-                  onClick={() => {
-                    fileInputRef.current?.click();
-                    setShowPassbookModal(false);
-                    triggerHaptic("medium");
-                  }}
-                  className="absolute bottom-3 right-3 bg-blue-500 hover:bg-blue-600 text-white rounded-full px-4 py-2.5 shadow-xl transition-all active:scale-95 flex items-center gap-2"
-                >
-                  <span className="material-symbols-outlined text-lg">edit</span>
-                  <span className="font-medium text-sm">เปลี่ยนรูป</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Pull-to-Refresh Indicator */}
-        {pullDistance > 0 && activeTab === 'dashboard' && (
+        {pullDistance > 0 && activeTab === "dashboard" && (
           <div className="absolute top-2 left-0 right-0 z-50 flex justify-center pointer-events-none">
             <div className="rounded-full bg-white/10 p-2 backdrop-blur-xl border border-white/20">
               <span
-                className={`material-symbols-outlined text-white ${isRefreshing ? 'animate-spin' : ''}`}
+                className={`material-symbols-outlined text-white ${isRefreshing ? "animate-spin" : ""}`}
                 style={{
-                  fontSize: '20px',
+                  fontSize: "20px",
                   transform: `rotate(${pullDistance * 3}deg)`,
-                  transition: 'transform 0.1s ease'
+                  transition: "transform 0.1s ease",
                 }}
               >
                 refresh
@@ -858,28 +821,137 @@ export default function PartnerPortal() {
               <div className="absolute bottom-0 right-0 size-3.5 rounded-full bg-green-500 border-2 border-aiya-navy"></div>
             </div>
             <div>
-              <p className="text-white/60 text-sm font-medium leading-tight mb-0.5">ยินดีต้อนรับ,</p>
+              <p className="text-white/60 text-sm font-medium leading-tight mb-0.5">
+                ยินดีต้อนรับ,
+              </p>
               <p className="text-white text-xl font-bold leading-tight">
                 {profile?.displayName || "Partner"}
               </p>
             </div>
           </div>
-          <button
-            onClick={() => {
-              triggerHaptic("medium");
-              refreshStats();
-            }}
-            disabled={isRefreshing}
-            className="flex items-center justify-center size-11 rounded-full bg-white/5 hover:bg-white/10 transition-colors border border-white/5 active:scale-95"
-          >
-            <span className="material-symbols-outlined text-white" style={{ fontSize: '24px' }}>
-              {isRefreshing ? 'refresh' : 'notifications'}
-            </span>
-          </button>
+          {/* Notification Button */}
+          <div className="relative" ref={notificationRef}>
+            <button
+              onClick={() => {
+                triggerHaptic("light");
+                setShowNotifications(!showNotifications);
+                if (!showNotifications && referrals.length === 0) {
+                  handleFetchReferrals();
+                }
+              }}
+              className="relative flex items-center justify-center size-11 rounded-full bg-white/5 hover:bg-white/10 transition-all border border-white/5 active:scale-95"
+            >
+              <span
+                className="material-symbols-outlined text-white transition-transform"
+                style={{
+                  fontSize: "24px",
+                  fontVariationSettings: showNotifications ? "'FILL' 1" : "'FILL' 0"
+                }}
+              >
+                notifications
+              </span>
+              {/* Badge */}
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-5 h-5 flex items-center justify-center bg-red-500 text-white text-xs font-bold rounded-full px-1.5 animate-pulse">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {/* Notification Panel */}
+            {showNotifications && (
+              <div className="absolute top-full right-0 mt-2 w-80 max-h-96 bg-slate-800/95 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-white/5">
+                  <h3 className="text-white font-semibold">การแจ้งเตือน</h3>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={() => {
+                        markAllNotificationsRead();
+                        triggerHaptic("light");
+                      }}
+                      className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                    >
+                      อ่านทั้งหมด
+                    </button>
+                  )}
+                </div>
+
+                {/* Notification List */}
+                <div className="overflow-y-auto max-h-72">
+                  {notifications.length > 0 ? (
+                    notifications.map((notification) => (
+                      <div
+                        key={notification.id}
+                        className={`flex items-start gap-3 px-4 py-3 border-b border-white/5 transition-colors hover:bg-white/5 ${
+                          !notification.read ? 'bg-blue-500/10' : ''
+                        }`}
+                      >
+                        {/* Icon */}
+                        <div className={`flex-shrink-0 size-10 rounded-full flex items-center justify-center ${
+                          notification.type === 'commission_paid'
+                            ? 'bg-emerald-500/20 text-emerald-400'
+                            : notification.type === 'commission_approved'
+                            ? 'bg-purple-500/20 text-purple-400'
+                            : 'bg-blue-500/20 text-blue-400'
+                        }`}>
+                          <span className="material-symbols-outlined text-lg">
+                            {notification.type === 'commission_paid'
+                              ? 'payments'
+                              : notification.type === 'commission_approved'
+                              ? 'verified'
+                              : 'person_add'}
+                          </span>
+                        </div>
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-medium ${!notification.read ? 'text-white' : 'text-slate-300'}`}>
+                            {notification.title}
+                          </p>
+                          <p className="text-xs text-slate-400 truncate">{notification.message}</p>
+                          <p className="text-xs text-slate-500 mt-1">
+                            {formatRelativeTime(notification.timestamp)}
+                          </p>
+                        </div>
+                        {/* Unread dot */}
+                        {!notification.read && (
+                          <div className="size-2 rounded-full bg-blue-500 flex-shrink-0 mt-2"></div>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <span className="material-symbols-outlined text-4xl text-slate-500 mb-2">
+                        notifications_off
+                      </span>
+                      <p className="text-slate-400 text-sm">ยังไม่มีการแจ้งเตือน</p>
+                      <p className="text-slate-500 text-xs mt-1">เมื่อมีคนใช้รหัสของคุณจะแสดงที่นี่</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer */}
+                {notifications.length > 0 && (
+                  <div className="px-4 py-2 border-t border-white/10 bg-white/5">
+                    <button
+                      onClick={() => {
+                        setActiveTab('history');
+                        setShowNotifications(false);
+                        triggerHaptic("light");
+                      }}
+                      className="w-full text-center text-sm text-blue-400 hover:text-blue-300 transition-colors py-1"
+                    >
+                      ดูประวัติทั้งหมด →
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Tab Content */}
-        {activeTab === 'dashboard' && displayData && (
+        {activeTab === "dashboard" && displayData && (
           <>
             {/* Hero Card - Total Commission */}
             <div className="px-5 mt-2 mb-2">
@@ -887,10 +959,16 @@ export default function PartnerPortal() {
                 <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
                 <div className="relative p-7 flex flex-col gap-2">
                   <div className="flex justify-between items-start">
-                    <p className="text-white/90 text-base font-medium tracking-wide">รายได้สะสม</p>
+                    <p className="text-white/90 text-base font-medium tracking-wide">
+                      รายได้สะสม
+                    </p>
                     <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10">
-                      <span className="material-symbols-outlined text-white text-sm">trending_up</span>
-                      <span className="text-white text-xs font-bold">ใช้งานอยู่</span>
+                      <span className="material-symbols-outlined text-white text-sm">
+                        trending_up
+                      </span>
+                      <span className="text-white text-xs font-bold">
+                        ใช้งานอยู่
+                      </span>
                     </div>
                   </div>
                   <div className="mt-3">
@@ -898,17 +976,21 @@ export default function PartnerPortal() {
                       ฿ {formatCommission(displayData.stats.totalCommission)}
                     </h1>
                     <p className="text-white/80 text-sm font-medium mt-2">
-                      อัปเดตเมื่อ {lastUpdated ? 'เมื่อสักครู่' : 'เร็วๆ นี้'}
+                      อัปเดตเมื่อ {lastUpdated ? "เมื่อสักครู่" : "เร็วๆ นี้"}
                     </p>
                   </div>
                   <div className="mt-8 flex items-center justify-between">
                     <div className="h-1.5 w-full bg-black/10 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-gradient-to-r from-blue-400 to-purple-400 rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min((displayData.stats.totalCommission / 2000000) * 100, 100)}%` }}
+                        style={{
+                          width: `${Math.min((displayData.stats.totalCommission / 2000000) * 100, 100)}%`,
+                        }}
                       ></div>
                     </div>
-                    <span className="text-xs font-bold text-white ml-4 whitespace-nowrap">เป้าหมาย: ฿ 20k</span>
+                    <span className="text-xs font-bold text-white ml-4 whitespace-nowrap">
+                      เป้าหมาย: ฿ 20k
+                    </span>
                   </div>
                 </div>
               </div>
@@ -921,7 +1003,9 @@ export default function PartnerPortal() {
                   <span className="material-symbols-outlined">group</span>
                 </div>
                 <div>
-                  <p className="text-slate-400 text-sm font-medium leading-normal mb-1">ผู้ใช้โค้ด</p>
+                  <p className="text-slate-400 text-sm font-medium leading-normal mb-1">
+                    ผู้ใช้โค้ด
+                  </p>
                   <p className="text-white tracking-tight text-2xl font-bold leading-tight whitespace-nowrap">
                     {displayData.stats.totalRegistrations} คน
                   </p>
@@ -932,7 +1016,9 @@ export default function PartnerPortal() {
                   <span className="material-symbols-outlined">pending</span>
                 </div>
                 <div>
-                  <p className="text-slate-400 text-sm font-medium leading-normal mb-1">รอตรวจสอบ</p>
+                  <p className="text-slate-400 text-sm font-medium leading-normal mb-1">
+                    รอตรวจสอบ
+                  </p>
                   <p className="text-purple-400 tracking-tight text-2xl font-bold leading-tight whitespace-nowrap">
                     ฿{formatCommission(displayData.stats.pendingCommission)}
                   </p>
@@ -940,10 +1026,14 @@ export default function PartnerPortal() {
               </div>
               <div className="flex min-w-[140px] flex-1 flex-col gap-4 rounded-2xl p-6 bg-white/5 backdrop-blur-md border border-emerald-500/20 shadow-sm hover:border-emerald-500/40 transition-colors">
                 <div className="size-11 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
-                  <span className="material-symbols-outlined">check_circle</span>
+                  <span className="material-symbols-outlined">
+                    check_circle
+                  </span>
                 </div>
                 <div>
-                  <p className="text-slate-400 text-sm font-medium leading-normal mb-1">จ่ายแล้ว</p>
+                  <p className="text-slate-400 text-sm font-medium leading-normal mb-1">
+                    จ่ายแล้ว
+                  </p>
                   <p className="text-emerald-400 tracking-tight text-2xl font-bold leading-tight whitespace-nowrap">
                     ฿{formatCommission(paidCommission)}
                   </p>
@@ -951,61 +1041,125 @@ export default function PartnerPortal() {
               </div>
             </div>
 
-            {/* Referral Code Section */}
-            <div className="px-5 pb-6">
-              <label className="text-sm text-slate-400 font-medium ml-1 mb-3 block">รหัสแนะนำของคุณ</label>
-              <div className="flex items-center justify-between bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-transparent rounded-2xl border border-blue-500/30 p-2 pl-6 shadow-sm">
-                <span className="text-white font-bold text-xl tracking-widest font-mono drop-shadow-lg">
-                  {displayData.affiliate.affiliateCode}
-                </span>
-                <button
-                  onClick={() => {
-                    triggerHaptic("light");
-                    copyToClipboard(displayData.affiliate.affiliateCode);
-                  }}
-                  className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/20 text-white hover:bg-blue-500/30 transition-colors active:scale-95"
-                >
-                  <span className="material-symbols-outlined text-xl">
-                    {copied ? 'check' : 'content_copy'}
-                  </span>
-                </button>
+            {/* Referral Code Section - Coupon Style */}
+            <div className="px-5 pb-8">
+              <div className="relative group">
+                {/* Coupon Card */}
+                <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-purple-900/30 transition-all duration-300 hover:shadow-purple-500/40 hover:-translate-y-1 hover:scale-[1.01]">
+                  {/* Top Section - Gradient Background */}
+                  <div className="bg-gradient-to-br from-blue-500 via-purple-500 to-aiya-purple px-6 pt-8 pb-12 text-center relative overflow-hidden">
+                    {/* Animated background shimmer */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out"></div>
+
+                    {/* Decorative sparkles with animation */}
+                    <div className="absolute top-4 left-6 text-yellow-300/70 text-lg animate-[twinkle_2s_ease-in-out_infinite]">✦</div>
+                    <div className="absolute top-8 right-8 text-white/40 text-sm animate-[twinkle_2.5s_ease-in-out_infinite_0.5s]">✧</div>
+                    <div className="absolute bottom-6 left-10 text-blue-200/50 text-xs animate-[twinkle_3s_ease-in-out_infinite_1s]">✦</div>
+
+                    {/* Icon with pulse effect */}
+                    <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg transition-all duration-300 hover:scale-110 hover:bg-white/30 hover:shadow-xl group-hover:animate-[bounce_1s_ease-in-out]">
+                      <span
+                        className="material-symbols-outlined text-white text-3xl transition-transform duration-300 group-hover:scale-110"
+                        style={{ fontVariationSettings: "'FILL' 1" }}
+                      >
+                        redeem
+                      </span>
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="text-white font-bold text-lg mb-1 transition-all duration-300 group-hover:tracking-wider">
+                      รหัสแนะนำพิเศษ
+                    </h3>
+                    <p className="text-white/70 text-sm transition-all duration-300 group-hover:text-white/90">
+                      แชร์รหัสนี้ให้เพื่อนเพื่อรับค่าคอมมิชชั่น
+                    </p>
+                  </div>
+
+                  {/* Coupon Cutouts with shadow */}
+                  <div className="absolute left-0 top-[45%] -translate-y-1/2 -translate-x-1/2 w-8 h-8 bg-[#0a1628] rounded-full shadow-[inset_2px_0_4px_rgba(0,0,0,0.3)]"></div>
+                  <div className="absolute right-0 top-[45%] -translate-y-1/2 translate-x-1/2 w-8 h-8 bg-[#0a1628] rounded-full shadow-[inset_-2px_0_4px_rgba(0,0,0,0.3)]"></div>
+
+                  {/* Bottom Section - Code Area */}
+                  <div className="bg-gradient-to-br from-purple-600 via-aiya-purple to-purple-900 px-6 pt-8 pb-6 relative overflow-hidden">
+                    {/* Dashed separator line */}
+                    <div className="absolute top-0 left-6 right-6 border-t-2 border-dashed border-white/20"></div>
+
+                    {/* Decorative sparkles with animation */}
+                    <div className="absolute top-4 left-8 text-yellow-300/60 text-sm animate-[twinkle_2s_ease-in-out_infinite_0.3s]">✨</div>
+                    <div className="absolute top-6 right-6 text-pink-300/50 text-xs animate-[twinkle_2.5s_ease-in-out_infinite_0.7s]">✦</div>
+                    <div className="absolute bottom-12 left-6 text-blue-300/40 text-xs animate-[twinkle_3s_ease-in-out_infinite_1.2s]">✧</div>
+                    <div className="absolute bottom-8 right-10 text-yellow-200/50 text-sm animate-[float_3s_ease-in-out_infinite]">⭐</div>
+
+                    {/* Coupon Code Label */}
+                    <p className="text-purple-200/80 text-sm font-medium text-center mb-3 tracking-wide uppercase">
+                      Affiliate Code
+                    </p>
+
+                    {/* Code Display with glow effect */}
+                    <div className="text-center mb-6 relative">
+                      <span className="text-white font-black text-4xl tracking-[0.15em] font-mono drop-shadow-lg transition-all duration-300 group-hover:drop-shadow-[0_0_15px_rgba(255,255,255,0.5)] group-hover:tracking-[0.2em]">
+                        {displayData.affiliate.affiliateCode}
+                      </span>
+                    </div>
+
+                    {/* Copy Button with enhanced effects */}
+                    <button
+                      onClick={() => {
+                        triggerHaptic("light");
+                        copyToClipboard(displayData.affiliate.affiliateCode);
+                      }}
+                      className={`w-full py-4 rounded-2xl font-bold text-lg transition-all duration-300 active:scale-[0.96] ${
+                        copied
+                          ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/40 scale-[1.02]"
+                          : "bg-white text-purple-700 shadow-lg shadow-white/20 hover:shadow-xl hover:shadow-white/30 hover:scale-[1.02] hover:-translate-y-0.5"
+                      }`}
+                    >
+                      <span className={`inline-flex items-center gap-2 transition-all duration-300 ${copied ? 'animate-[popIn_0.3s_ease-out]' : ''}`}>
+                        {copied ? (
+                          <>
+                            <span className="material-symbols-outlined text-xl">check_circle</span>
+                            คัดลอกแล้ว!
+                          </>
+                        ) : (
+                          <>
+                            <span className="material-symbols-outlined text-xl">content_copy</span>
+                            คัดลอกรหัส
+                          </>
+                        )}
+                      </span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-4 px-5 pb-8 flex-grow justify-end">
+            {/* LINE Share Button */}
+            <div className="px-5 pb-8">
               <button
                 onClick={() => {
                   triggerHaptic("medium");
                   shareToLine();
                 }}
                 disabled={isSharing}
-                className={`relative w-full cursor-pointer overflow-hidden rounded-full h-14 bg-line-green hover:bg-[#05b34c] transition-colors text-white shadow-lg shadow-green-900/30 group active:scale-95 ${
-                  isSharing ? 'opacity-50 cursor-not-allowed' : ''
+                className={`group relative w-full cursor-pointer overflow-hidden rounded-2xl py-5 bg-[#06C755] transition-all duration-300 text-white shadow-xl shadow-green-900/40 active:scale-[0.97] ${
+                  isSharing
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:bg-[#05b34c] hover:shadow-2xl hover:shadow-green-500/50 hover:-translate-y-1 hover:scale-[1.02]"
                 }`}
               >
-                <div className="flex items-center justify-center gap-3 px-5 h-full w-full">
-                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                {/* Shine effect on hover */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out"></div>
+
+                <div className="relative flex items-center justify-center gap-3">
+                  <svg
+                    className="w-7 h-7 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[-5deg]"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
                     <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
                   </svg>
-                  <span className="text-lg font-bold tracking-wide">
-                    {isSharing ? 'กำลังแชร์...' : 'แชร์บอกเพื่อน'}
-                  </span>
-                </div>
-              </button>
-              <button
-                onClick={() => {
-                  triggerHaptic("light");
-                  copyReferralLink();
-                }}
-                className="w-full cursor-pointer items-center justify-center overflow-hidden rounded-full h-14 border border-aiya-purple/30 bg-gradient-to-r from-aiya-purple/20 to-transparent hover:from-aiya-purple/30 hover:to-aiya-purple/10 text-white transition-all active:scale-95 shadow-lg shadow-aiya-purple/10"
-              >
-                <div className="flex items-center justify-center gap-3 px-5">
-                  <span className="material-symbols-outlined text-2xl text-white">
-                    {copiedLink ? 'check' : 'link'}
-                  </span>
-                  <span className="text-lg font-semibold">
-                    {copiedLink ? 'คัดลอกแล้ว!' : 'คัดลอกลิงก์'}
+                  <span className="text-xl font-bold transition-all duration-300 group-hover:tracking-wide">
+                    {isSharing ? "กำลังแชร์..." : "แชร์ให้เพื่อนใน LINE"}
                   </span>
                 </div>
               </button>
@@ -1014,10 +1168,12 @@ export default function PartnerPortal() {
         )}
 
         {/* History Tab */}
-        {activeTab === 'history' && (
+        {activeTab === "history" && (
           <div className="px-5 mt-4">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-white">ประวัติการทำรายการ</h2>
+              <h2 className="text-2xl font-bold text-white">
+                ประวัติการทำรายการ
+              </h2>
               <button
                 onClick={() => {
                   handleFetchReferrals();
@@ -1026,7 +1182,9 @@ export default function PartnerPortal() {
                 disabled={isLoadingReferrals}
                 className="flex items-center justify-center size-10 rounded-full bg-white/5 hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <span className={`material-symbols-outlined text-white text-xl ${isLoadingReferrals ? 'animate-spin' : ''}`}>
+                <span
+                  className={`material-symbols-outlined text-white text-xl ${isLoadingReferrals ? "animate-spin" : ""}`}
+                >
                   refresh
                 </span>
               </button>
@@ -1039,19 +1197,35 @@ export default function PartnerPortal() {
               </div>
             ) : referralsError ? (
               <div className="text-center py-12">
-                <span className="material-symbols-outlined text-6xl text-red-400 mb-4 block">error</span>
-                <p className="text-red-400 font-semibold mb-2">เกิดข้อผิดพลาด</p>
+                <span className="material-symbols-outlined text-6xl text-red-400 mb-4 block">
+                  error
+                </span>
+                <p className="text-red-400 font-semibold mb-2">
+                  เกิดข้อผิดพลาด
+                </p>
                 <p className="text-slate-400 text-sm">{referralsError}</p>
               </div>
             ) : referrals.length > 0 ? (
               <div className="space-y-4">
                 {referrals.map((referral) => {
                   const statusInfo =
-                    referral.commissionStatus === 'paid'
-                      ? { label: 'จ่ายแล้ว', color: 'text-emerald-400', icon: 'check_circle' }
-                      : referral.commissionStatus === 'approved'
-                      ? { label: 'อนุมัติแล้ว', color: 'text-blue-400', icon: 'verified' }
-                      : { label: 'รอตรวจสอบ', color: 'text-yellow-400', icon: 'pending' };
+                    referral.commissionStatus === "paid"
+                      ? {
+                          label: "จ่ายแล้ว",
+                          color: "text-emerald-400",
+                          icon: "check_circle",
+                        }
+                      : referral.commissionStatus === "approved"
+                        ? {
+                            label: "อนุมัติแล้ว",
+                            color: "text-blue-400",
+                            icon: "verified",
+                          }
+                        : {
+                            label: "รอตรวจสอบ",
+                            color: "text-yellow-400",
+                            icon: "pending",
+                          };
 
                   return (
                     <div
@@ -1064,26 +1238,37 @@ export default function PartnerPortal() {
                             {referral.firstName} {referral.lastName}
                           </p>
                           <p className="text-slate-400 text-sm">
-                            {new Date(referral.createdAt).toLocaleDateString('th-TH', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: '2-digit'
-                            })}
+                            {new Date(referral.createdAt).toLocaleDateString(
+                              "th-TH",
+                              {
+                                day: "numeric",
+                                month: "short",
+                                year: "2-digit",
+                              },
+                            )}
                           </p>
                         </div>
                         <div className="text-right">
                           <p className="text-white font-bold text-lg">
                             +฿ {formatCommission(referral.commissionAmount)}
                           </p>
-                          <div className={`flex items-center gap-1 justify-end text-sm font-medium ${statusInfo.color}`}>
-                            <span className="material-symbols-outlined text-sm">{statusInfo.icon}</span>
+                          <div
+                            className={`flex items-center gap-1 justify-end text-sm font-medium ${statusInfo.color}`}
+                          >
+                            <span className="material-symbols-outlined text-sm">
+                              {statusInfo.icon}
+                            </span>
                             <span>{statusInfo.label}</span>
                           </div>
                         </div>
                       </div>
                       <div className="mt-2 pt-2 border-t border-white/5 flex items-center justify-between">
-                        <span className="text-slate-400 text-sm">📦 {referral.packageType}</span>
-                        <span className="text-slate-500 text-xs">{referral.email}</span>
+                        <span className="text-slate-400 text-sm">
+                          📦 {referral.packageType}
+                        </span>
+                        <span className="text-slate-500 text-xs">
+                          {referral.email}
+                        </span>
                       </div>
                     </div>
                   );
@@ -1091,26 +1276,41 @@ export default function PartnerPortal() {
               </div>
             ) : (
               <div className="text-center py-16">
-                <span className="material-symbols-outlined text-8xl text-slate-600 mb-4 block">receipt_long_off</span>
-                <h3 className="text-white text-xl font-bold mb-2">ยังไม่มีประวัติการแนะนำ</h3>
-                <p className="text-slate-400 text-sm mb-1">เริ่มแชร์รหัสของคุณเพื่อรับค่าคอมมิชชั่น!</p>
-                <p className="text-slate-500 text-xs">รหัสของคุณ: <span className="text-white font-bold">{displayData?.affiliate.affiliateCode}</span></p>
+                <span className="material-symbols-outlined text-8xl text-slate-600 mb-4 block">
+                  receipt_long_off
+                </span>
+                <h3 className="text-white text-xl font-bold mb-2">
+                  ยังไม่มีประวัติการแนะนำ
+                </h3>
+                <p className="text-slate-400 text-sm mb-1">
+                  เริ่มแชร์รหัสของคุณเพื่อรับค่าคอมมิชชั่น!
+                </p>
+                <p className="text-slate-500 text-xs">
+                  รหัสของคุณ:{" "}
+                  <span className="text-white font-bold">
+                    {displayData?.affiliate.affiliateCode}
+                  </span>
+                </p>
               </div>
             )}
           </div>
         )}
 
         {/* Profile Tab */}
-        {activeTab === 'profile' && displayData && (
+        {activeTab === "profile" && displayData && (
           <div className="px-5 mt-4">
             <h2 className="text-2xl font-bold text-white mb-6">ข้อมูลบัญชี</h2>
 
             {/* User Info Section */}
             <div className="bg-white/5 backdrop-blur-md border border-aiya-purple/20 rounded-2xl p-6 mb-6">
-              <h3 className="text-lg font-semibold text-white mb-4">ข้อมูลผู้ใช้</h3>
+              <h3 className="text-lg font-semibold text-white mb-4">
+                ข้อมูลผู้ใช้
+              </h3>
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm text-slate-400 mb-1 block">ชื่อ</label>
+                  <label className="text-sm text-slate-400 mb-1 block">
+                    ชื่อ
+                  </label>
                   <input
                     type="text"
                     value={displayData.affiliate.name}
@@ -1119,7 +1319,9 @@ export default function PartnerPortal() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm text-slate-400 mb-1 block">อีเมล</label>
+                  <label className="text-sm text-slate-400 mb-1 block">
+                    อีเมล
+                  </label>
                   <input
                     type="email"
                     value={displayData.affiliate.email}
@@ -1128,7 +1330,9 @@ export default function PartnerPortal() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm text-slate-400 mb-1 block">เบอร์โทรศัพท์</label>
+                  <label className="text-sm text-slate-400 mb-1 block">
+                    เบอร์โทรศัพท์
+                  </label>
                   <input
                     type="tel"
                     value={displayData.affiliate.phone}
@@ -1142,74 +1346,126 @@ export default function PartnerPortal() {
             {/* Bank Account Section */}
             <div className="bg-white/5 backdrop-blur-md border border-aiya-purple/20 rounded-2xl p-6 mb-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-white">ข้อมูลบัญชีธนาคาร</h3>
-                {displayData.affiliate.bankName && displayData.affiliate.bankAccountNumber && (
-                  <div className="flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-500/30 px-3 py-1 rounded-full">
-                    <span className="material-symbols-outlined text-emerald-400 text-sm">check_circle</span>
-                    <span className="text-emerald-400 text-xs font-semibold">บันทึกแล้ว</span>
-                  </div>
-                )}
+                <h3 className="text-lg font-semibold text-white">
+                  ข้อมูลบัญชีธนาคาร
+                </h3>
+                {displayData.affiliate.bankName &&
+                  displayData.affiliate.bankAccountNumber && (
+                    <div className="flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-500/30 px-3 py-1 rounded-full">
+                      <span className="material-symbols-outlined text-emerald-400 text-sm">
+                        check_circle
+                      </span>
+                      <span className="text-emerald-400 text-xs font-semibold">
+                        บันทึกแล้ว
+                      </span>
+                    </div>
+                  )}
               </div>
 
               <div className="space-y-5">
-                {/* Bank Selector Button */}
-                <div>
-                  <label className="text-sm text-slate-400 mb-3 block">เลือกธนาคาร</label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowBankModal(true);
-                      triggerHaptic("light");
-                    }}
-                    className="w-full bg-aiya-navy/50 border border-aiya-purple/20 rounded-xl px-4 py-4 hover:border-blue-400/50 transition-all active:scale-[0.99] flex items-center gap-3"
-                  >
-                    {selectedBankData ? (
-                      <>
-                        <div className="w-14 h-14 rounded-xl bg-white p-2 flex items-center justify-center flex-shrink-0 shadow-md">
-                          <img
-                            src={selectedBankData.logo}
-                            alt={selectedBankData.name}
-                            className="w-full h-full object-contain"
-                            onError={(e) => {
-                              // Fallback to colored circle with initials
-                              e.currentTarget.style.display = 'none';
-                              const parent = e.currentTarget.parentElement;
-                              if (parent) {
-                                parent.style.backgroundColor = selectedBankData.color;
-                                parent.innerHTML = `<span class="text-white text-sm font-bold">${selectedBankData.id.substring(0, 2).toUpperCase()}</span>`;
-                              }
+                {/* Bank Selector - Custom Dropdown */}
+                <div ref={bankDropdownRef}>
+                  <label className="text-sm text-slate-400 mb-2 block">
+                    เลือกธนาคาร
+                  </label>
+                  <div className="relative">
+                    {/* Dropdown Trigger Button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowBankDropdown(!showBankDropdown);
+                        triggerHaptic("light");
+                      }}
+                      className="w-full bg-aiya-navy/50 border border-aiya-purple/20 rounded-xl px-4 py-3.5 text-left flex items-center gap-3 hover:border-blue-400/30 focus:outline-none focus:border-blue-400/50 transition-colors"
+                    >
+                      {selectedBankData ? (
+                        <>
+                          <div className="w-8 h-8 rounded-lg bg-white p-1 flex items-center justify-center flex-shrink-0">
+                            <img
+                              src={selectedBankData.logo}
+                              alt={selectedBankData.abbr}
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-white font-medium">
+                              {selectedBankData.abbr}
+                            </span>
+                            <span className="text-slate-400 ml-2">
+                              - {selectedBankData.name}
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <span className="material-symbols-outlined text-slate-400">
+                            account_balance
+                          </span>
+                          <span className="text-slate-400">เลือกธนาคาร</span>
+                        </>
+                      )}
+                      <span
+                        className={`material-symbols-outlined text-slate-400 ml-auto transition-transform ${showBankDropdown ? "rotate-180" : ""}`}
+                      >
+                        expand_more
+                      </span>
+                    </button>
+
+                    {/* Dropdown Menu */}
+                    {showBankDropdown && (
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-slate-800 border border-slate-700 rounded-xl shadow-xl z-50 max-h-64 overflow-y-auto">
+                        {BANKS.map((bank) => (
+                          <button
+                            key={bank.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedBank(bank.id);
+                              setShowBankDropdown(false);
+                              triggerHaptic("medium");
                             }}
-                          />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <p className="text-white font-medium">{selectedBankData.name}</p>
-                          <p className="text-slate-400 text-xs">{selectedBankData.fullName}</p>
-                        </div>
-                        <span className="material-symbols-outlined text-blue-400">edit</span>
-                      </>
-                    ) : (
-                      <>
-                        <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
-                          <span className="material-symbols-outlined text-slate-400">account_balance</span>
-                        </div>
-                        <div className="flex-1 text-left">
-                          <p className="text-slate-400">เลือกธนาคาร</p>
-                          <p className="text-slate-500 text-xs">กดเพื่อเลือกธนาคารของคุณ</p>
-                        </div>
-                        <span className="material-symbols-outlined text-slate-400">arrow_forward_ios</span>
-                      </>
+                            className={`w-full px-4 py-3 flex items-center gap-3 hover:bg-slate-700/50 transition-colors ${
+                              selectedBank === bank.id ? "bg-blue-500/20" : ""
+                            } ${bank.id === BANKS[0].id ? "rounded-t-xl" : ""} ${bank.id === BANKS[BANKS.length - 1].id ? "rounded-b-xl" : ""}`}
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-white p-1 flex items-center justify-center flex-shrink-0">
+                              <img
+                                src={bank.logo}
+                                alt={bank.abbr}
+                                className="w-full h-full object-contain"
+                              />
+                            </div>
+                            <div className="flex-1 text-left">
+                              <span className="text-white font-medium">
+                                {bank.abbr}
+                              </span>
+                              <span className="text-slate-400 ml-2 text-sm">
+                                - {bank.name}
+                              </span>
+                            </div>
+                            {selectedBank === bank.id && (
+                              <span className="material-symbols-outlined text-blue-400 text-lg">
+                                check
+                              </span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
                     )}
-                  </button>
+                  </div>
                 </div>
 
                 {/* Account Number */}
                 <div>
-                  <label className="text-sm text-slate-400 mb-1 block">เลขที่บัญชี</label>
+                  <label className="text-sm text-slate-400 mb-1 block">
+                    เลขที่บัญชี
+                  </label>
                   <div className="relative">
                     <input
                       type="text"
                       value={accountNumber}
-                      onChange={(e) => handleAccountNumberChange(e.target.value)}
+                      onChange={(e) =>
+                        handleAccountNumberChange(e.target.value)
+                      }
                       placeholder="xxx-x-xxxxx-x"
                       maxLength={13}
                       className="w-full bg-aiya-navy/50 border border-aiya-purple/20 rounded-xl px-4 py-3 pr-24 text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-400/50 transition-colors font-mono tracking-wide"
@@ -1219,7 +1475,9 @@ export default function PartnerPortal() {
                       onClick={handlePasteAccountNumber}
                       className="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-400 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors active:scale-95 flex items-center gap-1"
                     >
-                      <span className="material-symbols-outlined text-sm">content_paste</span>
+                      <span className="material-symbols-outlined text-sm">
+                        content_paste
+                      </span>
                       <span>วาง</span>
                     </button>
                   </div>
@@ -1227,7 +1485,9 @@ export default function PartnerPortal() {
 
                 {/* Account Name */}
                 <div>
-                  <label className="text-sm text-slate-400 mb-1 block">ชื่อบัญชี</label>
+                  <label className="text-sm text-slate-400 mb-1 block">
+                    ชื่อบัญชี
+                  </label>
                   <input
                     type="text"
                     value={accountName}
@@ -1239,23 +1499,31 @@ export default function PartnerPortal() {
 
                 {/* Passbook Image Upload */}
                 <div>
-                  <label className="text-sm text-slate-400 mb-2 block">รูปภาพหน้าสมุดบัญชี</label>
+                  <label className="text-sm text-slate-400 mb-2 block">
+                    รูปภาพหน้าสมุดบัญชี
+                  </label>
 
                   {passbookPreview ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowPassbookModal(true);
-                        triggerHaptic("light");
-                      }}
-                      className="w-full aspect-video rounded-xl overflow-hidden bg-aiya-navy/50 border border-aiya-purple/20 hover:border-blue-400/50 transition-all active:scale-[0.99] cursor-pointer"
-                    >
+                    <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-aiya-navy/50 border border-aiya-purple/20">
                       <img
                         src={passbookPreview}
                         alt="Passbook preview"
                         className="w-full h-full object-cover"
                       />
-                    </button>
+                      {/* Minimal Change Button */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          fileInputRef.current?.click();
+                          triggerHaptic("light");
+                        }}
+                        className="absolute bottom-2 right-2 w-9 h-9 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-sm flex items-center justify-center transition-all active:scale-95"
+                      >
+                        <span className="material-symbols-outlined text-white text-lg">
+                          edit
+                        </span>
+                      </button>
+                    </div>
                   ) : (
                     <button
                       type="button"
@@ -1263,11 +1531,17 @@ export default function PartnerPortal() {
                       className="w-full aspect-video rounded-xl border-2 border-dashed border-aiya-purple/30 bg-aiya-navy/30 hover:border-blue-400/50 hover:bg-aiya-navy/50 transition-all flex flex-col items-center justify-center gap-3 active:scale-[0.99]"
                     >
                       <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center">
-                        <span className="material-symbols-outlined text-blue-400 text-3xl">upload_file</span>
+                        <span className="material-symbols-outlined text-blue-400 text-3xl">
+                          upload_file
+                        </span>
                       </div>
                       <div className="text-center">
-                        <p className="text-white font-medium mb-1">อัปโหลดรูปหน้าสมุดบัญชี</p>
-                        <p className="text-slate-400 text-xs">รองรับ JPG, PNG (ไม่เกิน 2MB)</p>
+                        <p className="text-white font-medium mb-1">
+                          อัปโหลดรูปหน้าสมุดบัญชี
+                        </p>
+                        <p className="text-slate-400 text-xs">
+                          รองรับ JPG, PNG (ไม่เกิน 2MB)
+                        </p>
                       </div>
                     </button>
                   )}
@@ -1285,23 +1559,29 @@ export default function PartnerPortal() {
               {/* Save Button */}
               <button
                 onClick={handleSaveBankProfile}
-                disabled={!hasFormChanges() || saveButtonState === 'loading' || saveButtonState === 'success'}
+                disabled={
+                  !hasFormChanges() ||
+                  saveButtonState === "loading" ||
+                  saveButtonState === "success"
+                }
                 className={`w-full mt-6 font-bold py-3 px-6 rounded-full transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 ${
-                  saveButtonState === 'success'
-                    ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20'
-                    : saveButtonState === 'loading'
-                    ? 'bg-gradient-to-r from-aiya-purple to-[#5C499D] cursor-wait shadow-aiya-purple/20'
-                    : 'bg-gradient-to-r from-aiya-purple to-[#5C499D] hover:from-aiya-purple/80 hover:to-[#5C499D]/80 disabled:from-slate-600 disabled:to-slate-700 disabled:cursor-not-allowed disabled:opacity-50 shadow-aiya-purple/20'
+                  saveButtonState === "success"
+                    ? "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20"
+                    : saveButtonState === "loading"
+                      ? "bg-gradient-to-r from-aiya-purple to-[#5C499D] cursor-wait shadow-aiya-purple/20"
+                      : "bg-gradient-to-r from-aiya-purple to-[#5C499D] hover:from-aiya-purple/80 hover:to-[#5C499D]/80 disabled:from-slate-600 disabled:to-slate-700 disabled:cursor-not-allowed disabled:opacity-50 shadow-aiya-purple/20"
                 } text-white`}
               >
-                {saveButtonState === 'loading' ? (
+                {saveButtonState === "loading" ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                     <span>กำลังบันทึก...</span>
                   </>
-                ) : saveButtonState === 'success' ? (
+                ) : saveButtonState === "success" ? (
                   <>
-                    <span className="material-symbols-outlined">check_circle</span>
+                    <span className="material-symbols-outlined">
+                      check_circle
+                    </span>
                     <span>บันทึกเรียบร้อย!</span>
                   </>
                 ) : (
@@ -1316,74 +1596,19 @@ export default function PartnerPortal() {
             {/* Additional Info */}
             <div className="bg-white/5 backdrop-blur-md border border-blue-500/20 rounded-2xl p-6">
               <div className="flex items-start gap-3">
-                <span className="material-symbols-outlined text-blue-400 text-xl mt-0.5">info</span>
+                <span className="material-symbols-outlined text-blue-400 text-xl mt-0.5">
+                  info
+                </span>
                 <div>
                   <p className="text-sm text-slate-300 leading-relaxed">
-                    ข้อมูลบัญชีธนาคารจะใช้สำหรับการโอนเงินค่าคอมมิชชั่นให้กับคุณ กรุณาตรวจสอบความถูกต้องก่อนบันทึก
+                    ข้อมูลบัญชีธนาคารจะใช้สำหรับการโอนเงินค่าคอมมิชชั่นให้กับคุณ
+                    กรุณาตรวจสอบความถูกต้องก่อนบันทึก
                   </p>
                 </div>
               </div>
             </div>
           </div>
         )}
-
-        {/* Bottom Navigation */}
-        <div className="fixed bottom-0 left-0 z-50 w-full bg-aiya-navy/95 backdrop-blur-xl border-t border-aiya-purple/20 shadow-[0_-4px_20px_rgba(58,35,181,0.15)]" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-          <div className="flex h-16 items-center justify-around px-2">
-            <button
-              onClick={() => {
-                triggerHaptic("light");
-                setActiveTab('dashboard');
-              }}
-              className={`flex flex-col items-center justify-center gap-1 p-2 transition-colors active:scale-95 ${
-                activeTab === 'dashboard' ? 'text-blue-400' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <span
-                className="material-symbols-outlined"
-                style={{ fontVariationSettings: activeTab === 'dashboard' ? "'FILL' 1" : "'FILL' 0" }}
-              >
-                dashboard
-              </span>
-              <span className={`text-[10px] ${activeTab === 'dashboard' ? 'font-bold' : 'font-medium'}`}>หน้าหลัก</span>
-            </button>
-            <button
-              onClick={() => {
-                triggerHaptic("light");
-                setActiveTab('history');
-              }}
-              className={`flex flex-col items-center justify-center gap-1 p-2 transition-colors active:scale-95 ${
-                activeTab === 'history' ? 'text-blue-400' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <span
-                className="material-symbols-outlined"
-                style={{ fontVariationSettings: activeTab === 'history' ? "'FILL' 1" : "'FILL' 0" }}
-              >
-                bar_chart
-              </span>
-              <span className={`text-[10px] ${activeTab === 'history' ? 'font-bold' : 'font-medium'}`}>ประวัติ</span>
-            </button>
-            <button
-              onClick={() => {
-                triggerHaptic("light");
-                setActiveTab('profile');
-              }}
-              className={`flex flex-col items-center justify-center gap-1 p-2 transition-colors active:scale-95 ${
-                activeTab === 'profile' ? 'text-blue-400' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <span
-                className="material-symbols-outlined"
-                style={{ fontVariationSettings: activeTab === 'profile' ? "'FILL' 1" : "'FILL' 0" }}
-              >
-                person
-              </span>
-              <span className={`text-[10px] ${activeTab === 'profile' ? 'font-bold' : 'font-medium'}`}>บัญชี</span>
-            </button>
-          </div>
-          <div className="h-4 w-full"></div>
-        </div>
 
         <style>{`
           .scrollbar-hide::-webkit-scrollbar {
@@ -1401,7 +1626,142 @@ export default function PartnerPortal() {
               transform: translateY(0);
             }
           }
+          @keyframes twinkle {
+            0%, 100% {
+              opacity: 0.3;
+              transform: scale(1);
+            }
+            50% {
+              opacity: 1;
+              transform: scale(1.2);
+            }
+          }
+          @keyframes float {
+            0%, 100% {
+              transform: translateY(0) rotate(0deg);
+            }
+            50% {
+              transform: translateY(-5px) rotate(10deg);
+            }
+          }
+          @keyframes popIn {
+            0% {
+              transform: scale(0.8);
+              opacity: 0;
+            }
+            50% {
+              transform: scale(1.1);
+            }
+            100% {
+              transform: scale(1);
+              opacity: 1;
+            }
+          }
+          @keyframes shimmer {
+            0% {
+              transform: translateX(-100%);
+            }
+            100% {
+              transform: translateX(100%);
+            }
+          }
+          @keyframes glow {
+            0%, 100% {
+              box-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+            }
+            50% {
+              box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+            }
+          }
         `}</style>
+      </div>
+
+      {/* Bottom Navigation - Outside main container to avoid transform breaking fixed positioning */}
+      <div
+        className="fixed bottom-0 left-0 z-50 w-full bg-aiya-navy/95 backdrop-blur-xl border-t border-aiya-purple/20 shadow-[0_-4px_20px_rgba(58,35,181,0.15)]"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
+        <div className="flex h-16 items-center justify-around px-2">
+          <button
+            onClick={() => {
+              triggerHaptic("light");
+              setActiveTab("dashboard");
+            }}
+            className={`flex flex-col items-center justify-center gap-1 p-2 transition-colors active:scale-95 ${
+              activeTab === "dashboard"
+                ? "text-blue-400"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            <span
+              className="material-symbols-outlined"
+              style={{
+                fontVariationSettings:
+                  activeTab === "dashboard" ? "'FILL' 1" : "'FILL' 0",
+              }}
+            >
+              dashboard
+            </span>
+            <span
+              className={`text-[10px] ${activeTab === "dashboard" ? "font-bold" : "font-medium"}`}
+            >
+              หน้าหลัก
+            </span>
+          </button>
+          <button
+            onClick={() => {
+              triggerHaptic("light");
+              setActiveTab("history");
+            }}
+            className={`flex flex-col items-center justify-center gap-1 p-2 transition-colors active:scale-95 ${
+              activeTab === "history"
+                ? "text-blue-400"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            <span
+              className="material-symbols-outlined"
+              style={{
+                fontVariationSettings:
+                  activeTab === "history" ? "'FILL' 1" : "'FILL' 0",
+              }}
+            >
+              bar_chart
+            </span>
+            <span
+              className={`text-[10px] ${activeTab === "history" ? "font-bold" : "font-medium"}`}
+            >
+              ประวัติ
+            </span>
+          </button>
+          <button
+            onClick={() => {
+              triggerHaptic("light");
+              setActiveTab("profile");
+            }}
+            className={`flex flex-col items-center justify-center gap-1 p-2 transition-colors active:scale-95 ${
+              activeTab === "profile"
+                ? "text-blue-400"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            <span
+              className="material-symbols-outlined"
+              style={{
+                fontVariationSettings:
+                  activeTab === "profile" ? "'FILL' 1" : "'FILL' 0",
+              }}
+            >
+              person
+            </span>
+            <span
+              className={`text-[10px] ${activeTab === "profile" ? "font-bold" : "font-medium"}`}
+            >
+              บัญชี
+            </span>
+          </button>
+        </div>
+        <div className="h-4 w-full"></div>
       </div>
     </>
   );
