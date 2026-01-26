@@ -1,7 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLiff } from "../contexts/LiffContext";
 import DashboardSkeleton from "./DashboardSkeleton";
 import SEOHead from "./SEOHead";
+
+// Haptic Feedback Helper
+const triggerHaptic = (style: "light" | "medium" | "heavy" = "light") => {
+  if ("vibrate" in navigator) {
+    const patterns = {
+      light: 10,
+      medium: 20,
+      heavy: 30,
+    };
+    navigator.vibrate(patterns[style]);
+  }
+};
 
 interface DashboardData {
   affiliate: {
@@ -35,6 +47,11 @@ export default function PartnerPortal() {
   const [referrals, setReferrals] = useState<any[]>([]);
   const [isLoadingReferrals, setIsLoadingReferrals] = useState(false);
   const [referralsError, setReferralsError] = useState<string | null>(null);
+
+  // Pull-to-refresh states
+  const [pullDistance, setPullDistance] = useState(0);
+  const touchStartY = useRef(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Fetch dashboard data when logged in
   useEffect(() => {
@@ -142,6 +159,37 @@ export default function PartnerPortal() {
       setError("ไม่สามารถอัปเดตข้อมูลได้ กรุณาลองใหม่อีกครั้ง");
     } finally {
       setIsRefreshing(false);
+    }
+  };
+
+  // Pull-to-Refresh Handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const scrollTop = containerRef.current?.scrollTop || 0;
+    if (scrollTop === 0 && activeTab === 'dashboard') {
+      touchStartY.current = e.touches[0].clientY;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const scrollTop = containerRef.current?.scrollTop || 0;
+    if (scrollTop === 0 && !isRefreshing && activeTab === 'dashboard') {
+      const currentY = e.touches[0].clientY;
+      const distance = Math.max(0, currentY - touchStartY.current);
+
+      if (distance > 0 && distance < 100) {
+        setPullDistance(distance);
+      }
+    }
+  };
+
+  const handleTouchEnd = async () => {
+    if (pullDistance > 60 && !isRefreshing) {
+      triggerHaptic("medium");
+      setPullDistance(0);
+      await refreshStats();
+      triggerHaptic("light");
+    } else {
+      setPullDistance(0);
     }
   };
 
@@ -324,7 +372,34 @@ export default function PartnerPortal() {
         title={`${displayData?.affiliate.name || "สถิติของฉัน"} - AIYA Affiliate`}
         description={`ดูสถิติและค่าคอมมิชชั่นของคุณ | จำนวนผู้สมัคร: ${displayData?.stats.totalRegistrations || 0} คน | รายได้: ${displayData ? formatCommission(displayData.stats.totalCommission) : 0} บาท`}
       />
-      <div className="relative flex min-h-screen w-full flex-col bg-[#020c17] text-white overflow-x-hidden pb-24 font-sans">
+      <div
+        ref={containerRef}
+        className="relative flex min-h-screen w-full flex-col bg-[#020c17] text-white overflow-x-hidden pb-24 font-sans overflow-y-auto"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{
+          transform: `translateY(${Math.min(pullDistance * 0.5, 50)}px)`,
+          transition: pullDistance === 0 ? 'transform 0.3s ease' : 'none',
+        }}
+      >
+        {/* Pull-to-Refresh Indicator */}
+        {pullDistance > 0 && activeTab === 'dashboard' && (
+          <div className="absolute top-2 left-0 right-0 z-50 flex justify-center pointer-events-none">
+            <div className="rounded-full bg-white/10 p-2 backdrop-blur-xl border border-white/20">
+              <span
+                className={`material-symbols-outlined text-primary ${isRefreshing ? 'animate-spin' : ''}`}
+                style={{
+                  fontSize: '20px',
+                  transform: `rotate(${pullDistance * 3}deg)`,
+                  transition: 'transform 0.1s ease'
+                }}
+              >
+                refresh
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-14 pb-6">
@@ -351,9 +426,12 @@ export default function PartnerPortal() {
             </div>
           </div>
           <button
-            onClick={refreshStats}
+            onClick={() => {
+              triggerHaptic("medium");
+              refreshStats();
+            }}
             disabled={isRefreshing}
-            className="flex items-center justify-center size-11 rounded-full bg-white/5 hover:bg-white/10 transition-colors border border-white/5"
+            className="flex items-center justify-center size-11 rounded-full bg-white/5 hover:bg-white/10 transition-colors border border-white/5 active:scale-95"
           >
             <span className="material-symbols-outlined text-white" style={{ fontSize: '24px' }}>
               {isRefreshing ? 'refresh' : 'notifications'}
@@ -431,8 +509,11 @@ export default function PartnerPortal() {
                   {displayData.affiliate.affiliateCode}
                 </span>
                 <button
-                  onClick={() => copyToClipboard(displayData.affiliate.affiliateCode)}
-                  className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
+                  onClick={() => {
+                    triggerHaptic("light");
+                    copyToClipboard(displayData.affiliate.affiliateCode);
+                  }}
+                  className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white transition-colors active:scale-95"
                 >
                   <span className="material-symbols-outlined text-xl">
                     {copied ? 'check' : 'content_copy'}
@@ -444,9 +525,12 @@ export default function PartnerPortal() {
             {/* Action Buttons */}
             <div className="flex flex-col gap-4 px-5 pb-8 flex-grow justify-end">
               <button
-                onClick={shareToLine}
+                onClick={() => {
+                  triggerHaptic("medium");
+                  shareToLine();
+                }}
                 disabled={isSharing}
-                className={`relative w-full cursor-pointer overflow-hidden rounded-full h-14 bg-line-green hover:bg-[#05b34c] transition-colors text-white shadow-lg shadow-green-900/30 group ${
+                className={`relative w-full cursor-pointer overflow-hidden rounded-full h-14 bg-line-green hover:bg-[#05b34c] transition-colors text-white shadow-lg shadow-green-900/30 group active:scale-95 ${
                   isSharing ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >
@@ -460,8 +544,11 @@ export default function PartnerPortal() {
                 </div>
               </button>
               <button
-                onClick={copyReferralLink}
-                className="w-full cursor-pointer items-center justify-center overflow-hidden rounded-full h-14 border border-white/20 bg-white/5 hover:bg-white/10 text-white transition-all"
+                onClick={() => {
+                  triggerHaptic("light");
+                  copyReferralLink();
+                }}
+                className="w-full cursor-pointer items-center justify-center overflow-hidden rounded-full h-14 border border-white/20 bg-white/5 hover:bg-white/10 text-white transition-all active:scale-95"
               >
                 <div className="flex items-center justify-center gap-3 px-5">
                   <span className="material-symbols-outlined text-2xl">
@@ -656,8 +743,11 @@ export default function PartnerPortal() {
         <div className="fixed bottom-0 left-0 z-50 w-full bg-[#020c17]/95 backdrop-blur-xl border-t border-white/5" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
           <div className="flex h-16 items-center justify-around px-2">
             <button
-              onClick={() => setActiveTab('dashboard')}
-              className={`flex flex-col items-center justify-center gap-1 p-2 transition-colors ${
+              onClick={() => {
+                triggerHaptic("light");
+                setActiveTab('dashboard');
+              }}
+              className={`flex flex-col items-center justify-center gap-1 p-2 transition-colors active:scale-95 ${
                 activeTab === 'dashboard' ? 'text-primary' : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -670,8 +760,11 @@ export default function PartnerPortal() {
               <span className={`text-[10px] ${activeTab === 'dashboard' ? 'font-bold' : 'font-medium'}`}>หน้าหลัก</span>
             </button>
             <button
-              onClick={() => setActiveTab('history')}
-              className={`flex flex-col items-center justify-center gap-1 p-2 transition-colors ${
+              onClick={() => {
+                triggerHaptic("light");
+                setActiveTab('history');
+              }}
+              className={`flex flex-col items-center justify-center gap-1 p-2 transition-colors active:scale-95 ${
                 activeTab === 'history' ? 'text-primary' : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -684,8 +777,11 @@ export default function PartnerPortal() {
               <span className={`text-[10px] ${activeTab === 'history' ? 'font-bold' : 'font-medium'}`}>ประวัติ</span>
             </button>
             <button
-              onClick={() => setActiveTab('profile')}
-              className={`flex flex-col items-center justify-center gap-1 p-2 transition-colors ${
+              onClick={() => {
+                triggerHaptic("light");
+                setActiveTab('profile');
+              }}
+              className={`flex flex-col items-center justify-center gap-1 p-2 transition-colors active:scale-95 ${
                 activeTab === 'profile' ? 'text-primary' : 'text-slate-400 hover:text-white'
               }`}
             >
