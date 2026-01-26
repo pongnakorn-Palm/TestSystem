@@ -319,14 +319,14 @@ export default function PartnerPortal() {
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
-      setProfileSaveMessage({ type: 'error', text: 'กรุณาเลือกไฟล์รูปภาพเท่านั้น' });
+      alert('กรุณาเลือกไฟล์รูปภาพเท่านั้น');
       return;
     }
 
     // Validate file size (max 2MB)
     const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
     if (file.size > MAX_FILE_SIZE) {
-      setProfileSaveMessage({ type: 'error', text: 'ขนาดไฟล์ต้องไม่เกิน 2MB' });
+      alert('ขนาดไฟล์ต้องไม่เกิน 2MB');
       return;
     }
 
@@ -338,15 +338,6 @@ export default function PartnerPortal() {
       setPassbookPreview(reader.result as string);
     };
     reader.readAsDataURL(file);
-  };
-
-  // Remove passbook image
-  const handleRemoveImage = () => {
-    setPassbookImage(null);
-    setPassbookPreview(dashboardData?.affiliate.bankPassbookUrl || null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
   };
 
   // Save bank profile
