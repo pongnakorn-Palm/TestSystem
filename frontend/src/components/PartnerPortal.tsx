@@ -648,10 +648,10 @@ export default function PartnerPortal() {
 
         {/* Bank Selection Modal */}
         {showBankModal && (
-          <div className="fixed inset-0 z-[110] flex items-end md:items-center justify-center px-0 md:px-4">
+          <div className="fixed inset-0 z-[110]">
             {/* Backdrop */}
             <div
-              className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
               onClick={() => {
                 setShowBankModal(false);
                 setBankSearchQuery("");
@@ -659,10 +659,10 @@ export default function PartnerPortal() {
               }}
             />
 
-            {/* Modal Content */}
-            <div className="relative w-full md:max-w-2xl bg-gradient-to-b from-aiya-navy/98 to-[#0A0F1E]/98 md:rounded-3xl rounded-t-3xl border-t-2 md:border-2 border-aiya-purple/30 shadow-2xl max-h-[85vh] md:max-h-[90vh] flex flex-col animate-in slide-in-from-bottom-10 md:zoom-in-95 duration-300">
+            {/* Modal Content - Bottom Sheet */}
+            <div className="fixed inset-x-0 bottom-0 z-[111] w-full md:max-w-2xl md:left-1/2 md:-translate-x-1/2 bg-[#1e293b] rounded-t-3xl md:rounded-3xl md:bottom-auto md:top-1/2 md:-translate-y-1/2 shadow-2xl max-h-[85vh] flex flex-col animate-[slideUp_0.3s_ease-out]">
               {/* Header */}
-              <div className="flex items-center justify-between p-6 pb-4 border-b border-white/10">
+              <div className="flex-shrink-0 flex items-center justify-between p-6 pb-4 border-b border-white/10">
                 <div>
                   <h3 className="text-xl font-bold text-white">เลือกธนาคารของคุณ</h3>
                   <p className="text-sm text-slate-400 mt-1">เลือกจาก {BANKS.length} ธนาคาร</p>
@@ -680,7 +680,7 @@ export default function PartnerPortal() {
               </div>
 
               {/* Search Bar */}
-              <div className="px-6 pt-4 pb-3">
+              <div className="flex-shrink-0 px-6 pt-4 pb-3">
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">
                     search
@@ -704,7 +704,7 @@ export default function PartnerPortal() {
               </div>
 
               {/* Bank Grid */}
-              <div className="flex-1 overflow-y-auto px-6 pb-6">
+              <div className="flex-1 overflow-y-auto px-6 pb-6 overscroll-contain">
                 {filteredBanks.length > 0 ? (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {filteredBanks.map((bank) => (
@@ -1392,6 +1392,14 @@ export default function PartnerPortal() {
           .scrollbar-hide {
             -ms-overflow-style: none;
             scrollbar-width: none;
+          }
+          @keyframes slideUp {
+            from {
+              transform: translateY(100%);
+            }
+            to {
+              transform: translateY(0);
+            }
           }
         `}</style>
       </div>
