@@ -150,11 +150,14 @@ export function useReferralData(userId: string | undefined) {
 
   useEffect(() => {
     if (userId) {
+      // Fetch both dashboard and referrals on initial load
+      // Referrals data is needed for the growth chart on Dashboard
       fetchDashboard();
+      fetchReferrals();
     } else {
       setIsLoading(false);
     }
-  }, [userId, fetchDashboard]);
+  }, [userId, fetchDashboard, fetchReferrals]);
 
   return {
     dashboardData,
