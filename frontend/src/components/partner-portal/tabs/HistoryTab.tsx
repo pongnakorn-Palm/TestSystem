@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { formatCommission } from "../../../utils/formatting";
+import { formatCommission, maskEmail, maskName } from "../../../utils/formatting";
 import type { Referral } from "../hooks/useReferralData";
 import PullToRefresh from "../../ui/PullToRefresh";
 
@@ -266,7 +266,7 @@ export default function HistoryTab({
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <p className="text-white font-semibold text-base">
-                        {referral.firstName} {referral.lastName}
+                        {maskName(`${referral.firstName} ${referral.lastName}`)}
                       </p>
                       <p className="text-slate-400 text-sm">
                         {new Date(referral.createdAt).toLocaleDateString("th-TH", {
@@ -294,7 +294,7 @@ export default function HistoryTab({
                     <span className="text-slate-400 text-sm">
                       📦 {referral.packageType}
                     </span>
-                    <span className="text-slate-500 text-xs">{referral.email}</span>
+                    <span className="text-slate-500 text-xs">{maskEmail(referral.email)}</span>
                   </div>
                 </motion.div>
               );
