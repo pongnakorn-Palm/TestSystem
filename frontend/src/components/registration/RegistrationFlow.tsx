@@ -47,7 +47,6 @@ export default function RegistrationFlow({
   initialData,
   lineUserId,
   isLineLoggedIn,
-  onBack,
 }: RegistrationFlowProps) {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
@@ -62,7 +61,7 @@ export default function RegistrationFlow({
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
-  const [touched, setTouched] = useState<Set<string>>(new Set());
+  const [, setTouched] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
   const [codeAvailability, setCodeAvailability] = useState<
     "checking" | "available" | "taken" | null
