@@ -11,11 +11,23 @@ export default function AffiliateRegisterForm() {
   const { isLoggedIn, profile, login, isReady, isInClient } = useLiff();
   const [phase, setPhase] = useState<Phase>("onboarding");
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
-  const [isCheckingRegistration, setIsCheckingRegistration] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Check localStorage for onboarding completion (sync, before render)
+  useEffect(() => {
+    const completed = localStorage.getItem("aiya_onboarding_completed");
+    if (completed === "true") {
+      setHasCompletedOnboarding(true);
+      setPhase("registration");
+    }
+  }, []);
 
   // Check if user is already registered and redirect to dashboard
-  // Skip redirect if ?test=true is in URL (for development testing)
+  // Only run when LIFF is ready
   useEffect(() => {
+    // Wait for LIFF to be ready
+    if (!isReady) return;
+
     const checkExistingAffiliate = async () => {
       // Allow bypassing redirect for testing
       const urlParams = new URLSearchParams(window.location.search);
@@ -23,10 +35,11 @@ export default function AffiliateRegisterForm() {
         if (import.meta.env.DEV) {
           console.log("[DEV] Test mode enabled - skipping redirect check");
         }
-        setIsCheckingRegistration(false);
+        setIsInitialized(true);
         return;
       }
 
+      // Only check if logged in with profile
       if (isLoggedIn && profile?.userId) {
         try {
           const apiUrl = import.meta.env.VITE_API_URL || "";
@@ -37,7 +50,7 @@ export default function AffiliateRegisterForm() {
           if (response.ok) {
             // User is already registered, redirect to portal
             navigate("/portal", { replace: true });
-            // Keep loading state true to prevent flicker
+            // Don't set isInitialized - keep loading to prevent flicker
             return;
           }
         } catch (error) {
@@ -45,21 +58,12 @@ export default function AffiliateRegisterForm() {
         }
       }
 
-      // Only set to false if not redirecting
-      setIsCheckingRegistration(false);
+      // Done checking - allow render
+      setIsInitialized(true);
     };
 
     checkExistingAffiliate();
-  }, [isLoggedIn, profile?.userId, navigate]);
-
-  // Check localStorage for onboarding completion
-  useEffect(() => {
-    const completed = localStorage.getItem("aiya_onboarding_completed");
-    if (completed === "true") {
-      setHasCompletedOnboarding(true);
-      setPhase("registration");
-    }
-  }, []);
+  }, [isReady, isLoggedIn, profile?.userId, navigate]);
 
   const handleOnboardingComplete = () => {
     localStorage.setItem("aiya_onboarding_completed", "true");
@@ -72,16 +76,17 @@ export default function AffiliateRegisterForm() {
   };
 
   // Show loading spinner while LIFF is initializing or checking registration
-  if (!isReady || isCheckingRegistration) {
+  // Must wait for both isReady AND isInitialized to prevent flicker
+  if (!isReady || !isInitialized) {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center bg-aiya-dark relative overflow-hidden">
+      <div className="h-[100dvh] flex items-center justify-center bg-[#0F1216] relative overflow-hidden">
         {/* AIYA Brand Ambient Lighting */}
-        <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary-dark/10 via-transparent to-transparent pointer-events-none"></div>
-        <div className="fixed top-0 right-0 w-[600px] h-[600px] bg-[radial-gradient(circle,_var(--tw-gradient-stops))] from-primary/8 via-transparent to-transparent blur-3xl pointer-events-none"></div>
+        <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary-dark/10 via-transparent to-transparent pointer-events-none" />
+        <div className="fixed top-0 right-0 w-[600px] h-[600px] bg-[radial-gradient(circle,_var(--tw-gradient-stops))] from-primary/8 via-transparent to-transparent blur-3xl pointer-events-none" />
 
         <div className="text-center relative z-10">
-          <div className="inline-block animate-spin rounded-full h-16 w-16 border-3 border-primary/20 border-t-primary mb-4"></div>
-          <p className="text-white/70 text-sm font-medium">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-3 border-primary/20 border-t-primary mb-4" />
+          <p className="text-white/60 text-sm">
             {!isReady ? "กำลังโหลด..." : "กำลังตรวจสอบข้อมูล..."}
           </p>
         </div>
@@ -96,10 +101,10 @@ export default function AffiliateRegisterForm() {
 
   // Registration Phase
   return (
-    <div className="min-h-[100dvh] bg-[#0F1216]">
+    <div className="h-[100dvh] bg-[#0F1216] overflow-hidden">
       {/* LINE Login Prompt (if not logged in and in LIFF) */}
-      {isReady && isInClient && !isLoggedIn && (
-        <div className="fixed top-0 left-0 right-0 z-50 p-4 bg-[#0F1216]/95 backdrop-blur-sm border-b border-white/5">
+      {isInClient && !isLoggedIn && (
+        <div className="absolute top-0 left-0 right-0 z-50 p-4 bg-[#0F1216]/95 backdrop-blur-sm border-b border-white/5">
           <button
             onClick={login}
             className="w-full flex items-center justify-center gap-2 bg-[#06C755] hover:bg-[#05b34b] text-white font-semibold px-4 py-3 rounded-xl transition-colors"
@@ -113,25 +118,25 @@ export default function AffiliateRegisterForm() {
       )}
 
       {/* LINE Profile Badge (if logged in) */}
-      {isReady && isInClient && isLoggedIn && profile && (
-        <div className="fixed top-0 left-0 right-0 z-50 px-4 pt-12 pb-4 bg-[#0F1216]/95 backdrop-blur-sm border-b border-white/5">
+      {isInClient && isLoggedIn && profile && (
+        <div className="absolute top-0 left-0 right-0 z-50 px-4 pt-10 pb-3 bg-[#0F1216]/95 backdrop-blur-sm border-b border-white/5">
           <div className="flex items-center gap-3">
             <div className="relative">
               {profile.pictureUrl ? (
                 <img
                   src={profile.pictureUrl}
                   alt={profile.displayName}
-                  className="w-10 h-10 rounded-full border border-white/10"
+                  className="w-9 h-9 rounded-full border border-white/10"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white font-semibold">
+                <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white font-semibold text-sm">
                   {profile.displayName?.charAt(0)}
                 </div>
               )}
-              <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[#06C755] border-2 border-[#0F1216] rounded-full" />
+              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#06C755] border-2 border-[#0F1216] rounded-full" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-white/50">เข้าสู่ระบบโดย</p>
+              <p className="text-[10px] text-white/50">เข้าสู่ระบบโดย</p>
               <p className="text-sm font-semibold text-white truncate">
                 {profile.displayName}
               </p>
@@ -141,7 +146,7 @@ export default function AffiliateRegisterForm() {
       )}
 
       {/* Registration Form */}
-      <div className={isInClient && isLoggedIn ? "pt-24" : isInClient ? "pt-20" : ""}>
+      <div className={isInClient && isLoggedIn ? "pt-20" : isInClient ? "pt-16" : ""}>
         <RegistrationFlow
           initialData={{
             name: profile?.displayName || "",
